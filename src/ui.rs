@@ -370,8 +370,23 @@ fn render_hardware_z(f: &mut Frame, app: &App, area: Rect) {
             if let Some(v) = &intel.video {
                 gpu_specs.push(format!("  Video:   {:.1}%", v.busy));
             }
+            if let Some(v) = &intel.video_enhance {
+                gpu_specs.push(format!("  VEnhance:{:.1}%", v.busy));
+            }
             if let Some(b) = &intel.blitter {
                 gpu_specs.push(format!("  Blitter: {:.1}%", b.busy));
+            }
+            if let Some(freq) = gpu.intel_frequency_mhz {
+                gpu_specs.push(format!("  Clock:   {:.0} MHz", freq));
+            }
+            if let Some(power) = gpu.intel_power_w {
+                gpu_specs.push(format!("  GPU W:   {:.1} W", power));
+            }
+            if let Some(power) = gpu.intel_package_power_w {
+                gpu_specs.push(format!("  Pkg W:   {:.1} W", power));
+            }
+            if let Some(rc6) = gpu.intel_rc6 {
+                gpu_specs.push(format!("  RC6:     {:.1}%", rc6));
             }
         } else {
             if let Some(c) = gpu.clock_mhz {

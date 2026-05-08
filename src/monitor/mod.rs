@@ -9,21 +9,44 @@ use sysinfo::{Disks, System};
 #[derive(Deserialize, Debug, Default)]
 pub struct IntelGpuTop {
     pub engines: Option<IntelEngines>,
+    pub frequency: Option<IntelFrequency>,
+    pub power: Option<IntelPower>,
+    pub rc6: Option<IntelRc6>,
 }
 
 #[derive(Deserialize, Debug, Default)]
 pub struct IntelEngines {
-    #[serde(rename = "Render/3D/0")]
+    #[serde(rename = "Render/3D", alias = "Render/3D/0")]
     pub render: Option<IntelEngineUsage>,
-    #[serde(rename = "Video/0")]
+    #[serde(rename = "Video", alias = "Video/0")]
     pub video: Option<IntelEngineUsage>,
-    #[serde(rename = "Blitter/0")]
+    #[serde(rename = "Blitter", alias = "Blitter/0")]
     pub blitter: Option<IntelEngineUsage>,
+    #[serde(rename = "VideoEnhance", alias = "VideoEnhance/0")]
+    pub video_enhance: Option<IntelEngineUsage>,
 }
 
 #[derive(Deserialize, Debug, Default)]
 pub struct IntelEngineUsage {
     pub busy: f32,
+}
+
+#[derive(Deserialize, Debug, Default)]
+pub struct IntelFrequency {
+    pub actual: f32,
+}
+
+#[derive(Deserialize, Debug, Default)]
+pub struct IntelPower {
+    #[serde(rename = "GPU")]
+    pub gpu: f32,
+    #[serde(rename = "Package")]
+    pub package: f32,
+}
+
+#[derive(Deserialize, Debug, Default)]
+pub struct IntelRc6 {
+    pub value: f32,
 }
 
 pub struct GpuInfo {
@@ -38,6 +61,10 @@ pub struct GpuInfo {
     pub power_w: Option<u32>,
     pub fan_speed: Option<u32>,
     pub intel_details: Option<IntelEngines>,
+    pub intel_frequency_mhz: Option<f32>,
+    pub intel_power_w: Option<f32>,
+    pub intel_package_power_w: Option<f32>,
+    pub intel_rc6: Option<f32>,
     pub status: Option<String>,
 }
 
@@ -211,6 +238,10 @@ impl Monitor {
                             power_w: power,
                             fan_speed: fan,
                             intel_details: None,
+                            intel_frequency_mhz: None,
+                            intel_power_w: None,
+                            intel_package_power_w: None,
+                            intel_rc6: None,
                             status: None,
                         });
                     }
@@ -279,6 +310,10 @@ impl Monitor {
             power_w: None,
             fan_speed: None,
             intel_details: None,
+            intel_frequency_mhz: None,
+            intel_power_w: None,
+            intel_package_power_w: None,
+            intel_rc6: None,
             status: None,
         };
 
@@ -300,12 +335,12 @@ impl Monitor {
         } else if vendor == "Intel" {
             match read_intel_gpu_top() {
                 IntelGpuTopResult::Metrics(details) => {
+                    info.intel_frequency_mhz = details.frequency.as_ref().map(|freq| freq.actual);
+                    info.intel_power_w = details.power.as_ref().map(|power| power.gpu);
+                    info.intel_package_power_w = details.power.as_ref().map(|power| power.package);
+                    info.intel_rc6 = details.rc6.as_ref().map(|rc6| rc6.value);
                     info.intel_details = details.engines;
-                    info.usage = info
-                        .intel_details
-                        .as_ref()
-                        .and_then(|e| e.render.as_ref())
-                        .map(|r| r.busy.clamp(0.0, 100.0) as u32)
+                    info.usage = info.intel_details.as_ref().map(intel_gpu_usage);
                 }
                 IntelGpuTopResult::Unavailable(reason) => {
                     info.status = Some(reason);
@@ -434,6 +469,20 @@ fn read_intel_gpu_top() -> IntelGpuTopResult {
             "uso indisponivel: formato desconhecido do intel_gpu_top".to_string(),
         ),
     }
+}
+
+fn intel_gpu_usage(engines: &IntelEngines) -> u32 {
+    [
+        engines.render.as_ref(),
+        engines.video.as_ref(),
+        engines.blitter.as_ref(),
+        engines.video_enhance.as_ref(),
+    ]
+    .into_iter()
+    .flatten()
+    .map(|engine| engine.busy)
+    .fold(0.0, f32::max)
+    .clamp(0.0, 100.0) as u32
 }
 
 fn read_sysfs_u32(path: PathBuf) -> Option<u32> {
