@@ -36,3 +36,9 @@ cargo run
 ## Notes
 
 The app avoids privileged prompts while running. Intel GPU metrics are collected only when `intel_gpu_top` can run directly in the current environment; otherwise TeuPC keeps running and simply omits those details.
+
+On some systems, Intel GPU usage requires `CAP_PERFMON`. If the Hardware-Z screen reports that permission is missing, grant it outside the app with your normal admin workflow, for example:
+
+```bash
+sudo setcap cap_perfmon+ep /usr/bin/intel_gpu_top
+```

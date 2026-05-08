@@ -159,10 +159,14 @@ fn render_overview(f: &mut Frame, app: &App, area: Rect) {
                     "AMD" => Color::Red,
                     _ => Color::Blue,
                 };
-                let usage = gpu.usage.min(100);
+                let usage = gpu.usage.unwrap_or(0).min(100);
+                let usage_label = gpu
+                    .usage
+                    .map(|value| format!("{}%", value.min(100)))
+                    .unwrap_or_else(|| "uso indisponivel".to_string());
                 let info = format!(
-                    "{}% | VRAM: {:.1}/{:.1} GB{}",
-                    usage,
+                    "{} | VRAM: {:.1}/{:.1} GB{}",
+                    usage_label,
                     gpu.mem_used as f64 / BYTES_PER_GB,
                     gpu.mem_total as f64 / BYTES_PER_GB,
                     gpu.temp.map(|t| format!(" | {}°C", t)).unwrap_or_default()
@@ -377,6 +381,9 @@ fn render_hardware_z(f: &mut Frame, app: &App, area: Rect) {
                 gpu_specs.push(format!("  Power:   {} W", p));
             }
         }
+        if let Some(status) = &gpu.status {
+            gpu_specs.push(format!("  Status:  {}", status));
+        }
         gpu_specs.push(format!(
             "  VRAM:    {:.1} GB Total",
             gpu.mem_total as f64 / BYTES_PER_GB
@@ -409,11 +416,13 @@ fn render_network(f: &mut Frame, app: &App, area: Rect) {
     let networks = app.monitor.get_networks_info();
     let rows: Vec<Row> = networks
         .iter()
-        .map(|(n, rx, tx)| {
+        .map(|network| {
             Row::new(vec![
-                n.clone(),
-                format!("{:.1} MB", *rx as f64 / BYTES_PER_MB),
-                format!("{:.1} MB", *tx as f64 / BYTES_PER_MB),
+                network.name.clone(),
+                format_bytes_per_sec(network.rx_per_sec),
+                format_bytes_per_sec(network.tx_per_sec),
+                format!("{:.1} MB", network.rx_total as f64 / BYTES_PER_MB),
+                format!("{:.1} MB", network.tx_total as f64 / BYTES_PER_MB),
             ])
         })
         .collect();
@@ -431,12 +440,14 @@ fn render_network(f: &mut Frame, app: &App, area: Rect) {
             rows,
             [
                 Constraint::Min(20),
-                Constraint::Length(20),
-                Constraint::Length(20),
+                Constraint::Length(14),
+                Constraint::Length(14),
+                Constraint::Length(16),
+                Constraint::Length(16),
             ],
         )
             .header(
-                Row::new(vec!["Interface", "Total RX", "Total TX"])
+                Row::new(vec!["Interface", "RX/s", "TX/s", "Total RX", "Total TX"])
                     .style(Style::default().add_modifier(Modifier::BOLD))
                     .bottom_margin(1),
             )
@@ -483,4 +494,14 @@ fn percent_from_f32(value: f32) -> u16 {
 
 fn percent_from_f64(value: f64) -> u16 {
     value.clamp(0.0, 100.0).round() as u16
+}
+
+fn format_bytes_per_sec(bytes: u64) -> String {
+    if bytes >= 1_000_000 {
+        format!("{:.1} MB/s", bytes as f64 / 1_000_000.0)
+    } else if bytes >= 1_000 {
+        format!("{:.1} KB/s", bytes as f64 / 1_000.0)
+    } else {
+        format!("{} B/s", bytes)
+    }
 }

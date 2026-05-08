@@ -3,7 +3,8 @@ use serde::Deserialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use sysinfo::{Disks, Networks, System};
+use std::time::Instant;
+use sysinfo::{Disks, System};
 
 #[derive(Deserialize, Debug, Default)]
 pub struct IntelGpuTop {
@@ -28,7 +29,7 @@ pub struct IntelEngineUsage {
 pub struct GpuInfo {
     pub name: String,
     pub vendor: String,
-    pub usage: u32,
+    pub usage: Option<u32>,
     pub mem_used: u64,
     pub mem_total: u64,
     pub temp: Option<u32>,
@@ -37,6 +38,16 @@ pub struct GpuInfo {
     pub power_w: Option<u32>,
     pub fan_speed: Option<u32>,
     pub intel_details: Option<IntelEngines>,
+    pub status: Option<String>,
+}
+
+#[derive(Clone)]
+pub struct NetworkInfo {
+    pub name: String,
+    pub rx_total: u64,
+    pub tx_total: u64,
+    pub rx_per_sec: u64,
+    pub tx_per_sec: u64,
 }
 
 pub struct SystemMetadata {
@@ -51,22 +62,35 @@ pub struct SystemMetadata {
 
 pub struct Monitor {
     sys: System,
-    networks: Networks,
     nvml: Option<Nvml>,
     gpus: Vec<GpuInfo>,
+    networks: Vec<NetworkInfo>,
+    last_network_totals: Vec<(String, u64, u64)>,
+    last_network_refresh: Instant,
 }
 
 impl Monitor {
     pub fn new() -> Self {
         let mut sys = System::new_all();
         sys.refresh_all();
-        let networks = Networks::new_with_refreshed_list();
         let nvml = Nvml::init().ok();
+        let initial_networks = read_network_totals();
         let mut monitor = Self {
             sys,
-            networks,
             nvml,
             gpus: Vec::new(),
+            networks: initial_networks
+                .iter()
+                .map(|(name, rx, tx)| NetworkInfo {
+                    name: name.clone(),
+                    rx_total: *rx,
+                    tx_total: *tx,
+                    rx_per_sec: 0,
+                    tx_per_sec: 0,
+                })
+                .collect(),
+            last_network_totals: initial_networks,
+            last_network_refresh: Instant::now(),
         };
         monitor.refresh_gpus();
         monitor
@@ -74,9 +98,47 @@ impl Monitor {
 
     pub fn refresh(&mut self) {
         self.sys.refresh_all();
-        self.networks.refresh_list();
-        self.networks.refresh();
+        self.refresh_networks();
         self.refresh_gpus();
+    }
+
+    fn refresh_networks(&mut self) {
+        let now = Instant::now();
+        let elapsed = now.duration_since(self.last_network_refresh).as_secs_f64();
+        let current = read_network_totals();
+
+        self.networks = current
+            .iter()
+            .map(|(name, rx, tx)| {
+                let previous = self
+                    .last_network_totals
+                    .iter()
+                    .find(|(old_name, _, _)| old_name == name);
+                let (rx_per_sec, tx_per_sec) = previous
+                    .map(|(_, old_rx, old_tx)| {
+                        if elapsed > 0.0 {
+                            (
+                                ((*rx).saturating_sub(*old_rx) as f64 / elapsed) as u64,
+                                ((*tx).saturating_sub(*old_tx) as f64 / elapsed) as u64,
+                            )
+                        } else {
+                            (0, 0)
+                        }
+                    })
+                    .unwrap_or((0, 0));
+
+                NetworkInfo {
+                    name: name.clone(),
+                    rx_total: *rx,
+                    tx_total: *tx,
+                    rx_per_sec,
+                    tx_per_sec,
+                }
+            })
+            .collect();
+
+        self.last_network_totals = current;
+        self.last_network_refresh = now;
     }
 
     pub fn get_metadata(&self) -> SystemMetadata {
@@ -140,7 +202,7 @@ impl Monitor {
                         gpus.push(GpuInfo {
                             name,
                             vendor: "NVIDIA".to_string(),
-                            usage: usage.min(100),
+                            usage: Some(usage.min(100)),
                             mem_used: mem.0,
                             mem_total: mem.1,
                             temp,
@@ -149,6 +211,7 @@ impl Monitor {
                             power_w: power,
                             fan_speed: fan,
                             intel_details: None,
+                            status: None,
                         });
                     }
                 }
@@ -207,7 +270,7 @@ impl Monitor {
         let mut info = GpuInfo {
             name,
             vendor: vendor.to_string(),
-            usage: 0,
+            usage: None,
             mem_used: 0,
             mem_total: 0,
             temp: None,
@@ -216,12 +279,11 @@ impl Monitor {
             power_w: None,
             fan_speed: None,
             intel_details: None,
+            status: None,
         };
 
         if vendor == "AMD" {
-            info.usage = read_sysfs_u32(device_path.join("gpu_busy_percent"))
-                .unwrap_or(0)
-                .min(100);
+            info.usage = read_sysfs_u32(device_path.join("gpu_busy_percent")).map(|v| v.min(100));
             info.mem_used = read_sysfs_u64(device_path.join("mem_info_vram_used")).unwrap_or(0);
             info.mem_total = read_sysfs_u64(device_path.join("mem_info_vram_total")).unwrap_or(0);
             if let Ok(hwmon) = fs::read_dir(device_path.join("hwmon")) {
@@ -236,14 +298,18 @@ impl Monitor {
                 }
             }
         } else if vendor == "Intel" {
-            if let Some(details) = read_intel_gpu_top() {
-                info.intel_details = details.engines;
-                info.usage = info
-                    .intel_details
-                    .as_ref()
-                    .and_then(|e| e.render.as_ref())
-                    .map(|r| r.busy.clamp(0.0, 100.0) as u32)
-                    .unwrap_or(0);
+            match read_intel_gpu_top() {
+                IntelGpuTopResult::Metrics(details) => {
+                    info.intel_details = details.engines;
+                    info.usage = info
+                        .intel_details
+                        .as_ref()
+                        .and_then(|e| e.render.as_ref())
+                        .map(|r| r.busy.clamp(0.0, 100.0) as u32)
+                }
+                IntelGpuTopResult::Unavailable(reason) => {
+                    info.status = Some(reason);
+                }
             }
         }
         Some(info)
@@ -315,31 +381,59 @@ impl Monitor {
             .collect()
     }
 
-    pub fn get_networks_info(&self) -> Vec<(String, u64, u64)> {
-        self.networks
-            .iter()
-            .map(|(n, d)| (n.clone(), d.received(), d.transmitted()))
-            .collect()
+    pub fn get_networks_info(&self) -> &[NetworkInfo] {
+        &self.networks
     }
 }
 
-fn read_intel_gpu_top() -> Option<IntelGpuTop> {
-    let output = Command::new("intel_gpu_top")
+enum IntelGpuTopResult {
+    Metrics(IntelGpuTop),
+    Unavailable(String),
+}
+
+fn read_intel_gpu_top() -> IntelGpuTopResult {
+    let output = match Command::new("intel_gpu_top")
         .arg("-J")
         .arg("-s")
         .arg("100")
         .arg("-n")
         .arg("1")
         .output()
-        .ok()?;
+    {
+        Ok(output) => output,
+        Err(_) => return IntelGpuTopResult::Unavailable("intel_gpu_top nao encontrado".to_string()),
+    };
 
     if !output.status.success() {
-        return None;
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let reason = if stderr.contains("Permission denied") || stderr.contains("CAP_PERFMON") {
+            "uso indisponivel: falta permissao CAP_PERFMON".to_string()
+        } else {
+            "uso indisponivel: intel_gpu_top falhou".to_string()
+        };
+        return IntelGpuTopResult::Unavailable(reason);
     }
 
-    let parsed = serde_json::from_slice::<serde_json::Value>(&output.stdout).ok()?;
-    let first = parsed.as_array()?.first()?.clone();
-    serde_json::from_value::<IntelGpuTop>(first).ok()
+    let parsed = match serde_json::from_slice::<serde_json::Value>(&output.stdout) {
+        Ok(parsed) => parsed,
+        Err(_) => {
+            return IntelGpuTopResult::Unavailable(
+                "uso indisponivel: saida invalida do intel_gpu_top".to_string(),
+            )
+        }
+    };
+    let Some(first) = parsed.as_array().and_then(|items| items.first()).cloned() else {
+        return IntelGpuTopResult::Unavailable(
+            "uso indisponivel: sem amostra do intel_gpu_top".to_string(),
+        );
+    };
+
+    match serde_json::from_value::<IntelGpuTop>(first) {
+        Ok(metrics) => IntelGpuTopResult::Metrics(metrics),
+        Err(_) => IntelGpuTopResult::Unavailable(
+            "uso indisponivel: formato desconhecido do intel_gpu_top".to_string(),
+        ),
+    }
 }
 
 fn read_sysfs_u32(path: PathBuf) -> Option<u32> {
@@ -348,4 +442,25 @@ fn read_sysfs_u32(path: PathBuf) -> Option<u32> {
 
 fn read_sysfs_u64(path: PathBuf) -> Option<u64> {
     fs::read_to_string(path).ok()?.trim().parse().ok()
+}
+
+fn read_network_totals() -> Vec<(String, u64, u64)> {
+    let mut networks = Vec::new();
+    let Ok(entries) = fs::read_dir("/sys/class/net") else {
+        return networks;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+            continue;
+        };
+
+        let rx = read_sysfs_u64(path.join("statistics/rx_bytes")).unwrap_or(0);
+        let tx = read_sysfs_u64(path.join("statistics/tx_bytes")).unwrap_or(0);
+        networks.push((name.to_string(), rx, tx));
+    }
+
+    networks.sort_by(|a, b| a.0.cmp(&b.0));
+    networks
 }
