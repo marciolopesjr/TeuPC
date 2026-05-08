@@ -35,6 +35,8 @@ cargo run
 
 ## Notes
 
+The Network screen shows RX/TX sparklines for active interfaces plus current and total traffic counters.
+
 The app avoids privileged prompts while running. Intel GPU metrics are collected only when `intel_gpu_top` can run directly in the current environment; otherwise TeuPC keeps running and reports why usage is unavailable.
 
 On some systems, Intel GPU usage requires `CAP_PERFMON`. If the Hardware-Z screen reports that permission is missing, grant it outside the app with your normal admin workflow, for example:

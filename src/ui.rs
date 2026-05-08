@@ -429,6 +429,23 @@ fn render_hardware_z(f: &mut Frame, app: &App, area: Rect) {
 
 fn render_network(f: &mut Frame, app: &App, area: Rect) {
     let networks = app.monitor.get_networks_info();
+    if networks.is_empty() {
+        f.render_widget(
+            Paragraph::new("Nenhuma interface de rede detectada.")
+                .block(Block::default().title(" Network Activity ").borders(Borders::ALL)),
+            area,
+        );
+        return;
+    }
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(58), Constraint::Percentage(42)])
+        .margin(1)
+        .split(area);
+
+    render_network_graphs(f, app, chunks[0]);
+
     let rows: Vec<Row> = networks
         .iter()
         .map(|network| {
@@ -441,14 +458,6 @@ fn render_network(f: &mut Frame, app: &App, area: Rect) {
             ])
         })
         .collect();
-    if rows.is_empty() {
-        f.render_widget(
-            Paragraph::new("Nenhuma interface de rede detectada.")
-                .block(Block::default().title(" Network Activity ").borders(Borders::ALL)),
-            area,
-        );
-        return;
-    }
 
     f.render_widget(
         Table::new(
@@ -467,8 +476,64 @@ fn render_network(f: &mut Frame, app: &App, area: Rect) {
                     .bottom_margin(1),
             )
             .block(Block::default().title(" Network Activity ").borders(Borders::ALL)),
-        area,
+        chunks[1],
     );
+}
+
+fn render_network_graphs(f: &mut Frame, app: &App, area: Rect) {
+    let networks = app.monitor.get_networks_info();
+    let visible_count = networks.len().min(3);
+    let constraints = (0..visible_count)
+        .map(|_| Constraint::Ratio(1, visible_count as u32))
+        .collect::<Vec<_>>();
+    let interface_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(constraints)
+        .split(area);
+
+    for (i, network) in networks.iter().take(visible_count).enumerate() {
+        let pair_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(interface_chunks[i]);
+
+        let Some(history) = app.network_history.get(&network.name) else {
+            continue;
+        };
+        let rx_history = history.rx.iter().copied().collect::<Vec<_>>();
+        let tx_history = history.tx.iter().copied().collect::<Vec<_>>();
+
+        f.render_widget(
+            Sparkline::default()
+                .block(
+                    Block::default()
+                        .title(format!(
+                            " {} RX {} ",
+                            network.name,
+                            format_bytes_per_sec(network.rx_per_sec)
+                        ))
+                        .borders(Borders::ALL),
+                )
+                .style(Style::default().fg(Color::Cyan))
+                .data(&rx_history),
+            pair_chunks[0],
+        );
+        f.render_widget(
+            Sparkline::default()
+                .block(
+                    Block::default()
+                        .title(format!(
+                            " {} TX {} ",
+                            network.name,
+                            format_bytes_per_sec(network.tx_per_sec)
+                        ))
+                        .borders(Borders::ALL),
+                )
+                .style(Style::default().fg(Color::Yellow))
+                .data(&tx_history),
+            pair_chunks[1],
+        );
+    }
 }
 
 fn render_help(f: &mut Frame, area: Rect) {
