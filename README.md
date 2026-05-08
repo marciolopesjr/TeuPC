@@ -1,0 +1,38 @@
+# TeuPC
+
+TeuPC is a Linux terminal dashboard for quick system inspection. It shows CPU, memory, processes, hardware, GPU metrics, storage and network activity using a Ratatui interface.
+
+## Requirements
+
+- Rust stable
+- Linux
+- Optional: NVIDIA drivers/NVML for NVIDIA GPU metrics
+- Optional: `lspci`, `xrandr` and `intel_gpu_top` for richer hardware details
+
+## Run
+
+```bash
+cargo run
+```
+
+## Controls
+
+| Key | Action |
+| --- | --- |
+| `1` | Overview |
+| `2` | Processes |
+| `3` | Hardware-Z |
+| `4` | Network |
+| `?` or `h` | Help |
+| `Tab` / Right | Next screen |
+| `Shift+Tab` / Left | Previous screen |
+| Space | Pause/resume refresh |
+| `q` | Quit |
+| `c` | Sort processes by CPU |
+| `m` | Sort processes by memory |
+| `p` | Sort processes by PID |
+| `j` / `k` or Up / Down | Move process selection |
+
+## Notes
+
+The app avoids privileged prompts while running. Intel GPU metrics are collected only when `intel_gpu_top` can run directly in the current environment; otherwise TeuPC keeps running and simply omits those details.
