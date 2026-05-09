@@ -1,42 +1,42 @@
 # TeuPC Professional
 
-TeuPC is a high-performance, asynchronous system monitoring and hardware diagnostic tool for Linux. Designed with a high-density professional HUD, it provides deep insights into system vitals, hardware topology, and real-time performance metrics without blocking the user interface.
+O TeuPC é uma ferramenta de diagnóstico de hardware e monitoramento de sistema de alta performance para Linux. Desenvolvido com uma interface HUD (Heads-Up Display) profissional de alta densidade, ele oferece visões profundas sobre os sinais vitais do sistema, topologia de hardware e métricas de desempenho em tempo real, tudo sem bloquear a interface do usuário.
 
-## Key Features
+## Principais Funcionalidades
 
-- **Asynchronous Architecture:** Built on a multi-actor model using Tokio. Monitoring tasks (CPU, GPU, Network, Sensors, Bus) run in independent background loops, ensuring a smooth 60 FPS UI.
-- **Deep Hardware Diagnostics (AIDA64 Style):**
-    - **CPU:** Real-time per-core frequency (GHz) and instruction set identification (AVX, AVX-512, AES, etc.).
-    - **Storage:** Real-time I/O throughput (KB/s) and physical device model tracking.
-    - **Sensors:** Comprehensive telemetry including Voltages (VCore, 12V, 5V), Fan speeds (RPM), and thermal data.
-    - **Bus Inventory:** Real-time PCI and USB device scanning.
-- **Extreme Networking:** Public IP identification, geolocation (City/Country), and continuous latency (ping) monitoring.
-- **Professional HUD:** A high-density dashboard summarizing core vitals, neural pulses (history graphs), and electrical telemetry.
-- **Integrated Benchmarking:** Multi-threaded stress test and scoring engine to measure processor throughput.
-- **Reporting:** Instant JSON snapshots of the entire system state for auditing and logging.
+- **Arquitetura Assíncrona:** Construído sobre um modelo multi-ator utilizando Tokio. As tarefas de monitoramento (CPU, GPU, Rede, Sensores, Barramento) rodam em loops independentes em segundo plano, garantindo uma interface fluida a 60 FPS.
+- **Diagnóstico Profundo de Hardware (Nível AIDA64):**
+    - **CPU:** Monitoramento de frequência por núcleo em tempo real (GHz) e identificação do conjunto de instruções (AVX, AVX-512, AES, etc.).
+    - **Armazenamento:** Taxa de transferência de E/S (KB/s) em tempo real e rastreamento de modelos físicos de discos.
+    - **Sensores:** Telemetria abrangente incluindo Voltagens (VCore, 12V, 5V), velocidade de Coolers (RPM) e dados térmicos detalhados.
+    - **Barramentos:** Varredura em tempo real de dispositivos PCI e USB.
+- **Rede Extrema:** Identificação de IP público, geolocalização (Cidade/País) e monitoramento contínuo de latência (ping).
+- **HUD Profissional:** Painel principal de alta densidade resumindo sinais vitais, pulsos neurais (gráficos de histórico) e telemetria elétrica.
+- **Benchmarks Integrados:** Teste de stress multi-thread e motor de pontuação para medir o throughput do processador.
+- **Relatórios:** Snapshots JSON instantâneos de todo o estado do sistema para auditoria e logs técnicos.
 
-## Installation
+## Instalação
 
-### Prerequisites
+### Pré-requisitos
 - Rust (Stable)
 - Linux
-- Optional: `intel_gpu_top` (for Intel GPU metrics), `nvml` (for NVIDIA), `xrandr` (for display info).
+- Opcionais: `intel_gpu_top` (para métricas de GPU Intel), `nvml` (para NVIDIA), `xrandr` (para info de displays).
 
-### Build from source
+### Compilar da fonte
 ```bash
-git clone https://github.com/marciolopes/TeuPC.git
+git clone https://github.com/marciolopesjr/TeuPC.git
 cd TeuPC
 cargo build --release
 ./target/release/teupc
 ```
 
-## Navigation & Controls
-- **[1-7]**: Switch between tabs (Overview, Processes, Hardware, Network, Sensors, Bus, Bench).
-- **Tab / Arrows**: Navigate screens.
-- **Space**: Pause/Resume UI refresh.
-- **s**: Export technical JSON snapshot.
-- **b**: Start CPU stress test.
-- **q**: Quit.
+## Navegação e Controles
+- **[1-7]**: Alternar entre abas (Geral, Processos, Hardware, Rede, Sensores, Barramento, Bench).
+- **Tab / Setas**: Navegar pelas telas.
+- **Espaço**: Pausar/Retomar a atualização da interface.
+- **s**: Exportar snapshot técnico em JSON.
+- **b**: Iniciar teste de stress da CPU.
+- **q**: Sair.
 
-## License
-Distributed under the MIT License. See `LICENSE` for more information.
+## Licença
+Distribuído sob a Licença MIT. Veja o arquivo `LICENSE` para mais informações.
