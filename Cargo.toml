@@ -5,11 +5,12 @@ edition = "2021"
 
 [dependencies]
 ratatui = "0.26"
-crossterm = { version = "0.27", features = ["events"] }
+crossterm = { version = "0.27", features = ["events", "event-stream"] }
 sysinfo = "0.30"
 nvml-wrapper = "0.10"
 chrono = "0.4"
 anyhow = "1.0"
 tokio = { version = "1.36", features = ["full"] }
+futures-util = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
