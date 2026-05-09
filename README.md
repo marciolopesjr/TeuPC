@@ -1,46 +1,42 @@
-# TeuPC
+# TeuPC Professional
 
-TeuPC is a Linux terminal dashboard for quick system inspection. It shows CPU, memory, processes, hardware, GPU metrics, storage and network activity using a Ratatui interface.
+TeuPC is a high-performance, asynchronous system monitoring and hardware diagnostic tool for Linux. Designed with a high-density professional HUD, it provides deep insights into system vitals, hardware topology, and real-time performance metrics without blocking the user interface.
 
-## Requirements
+## Key Features
 
-- Rust stable
+- **Asynchronous Architecture:** Built on a multi-actor model using Tokio. Monitoring tasks (CPU, GPU, Network, Sensors, Bus) run in independent background loops, ensuring a smooth 60 FPS UI.
+- **Deep Hardware Diagnostics (AIDA64 Style):**
+    - **CPU:** Real-time per-core frequency (GHz) and instruction set identification (AVX, AVX-512, AES, etc.).
+    - **Storage:** Real-time I/O throughput (KB/s) and physical device model tracking.
+    - **Sensors:** Comprehensive telemetry including Voltages (VCore, 12V, 5V), Fan speeds (RPM), and thermal data.
+    - **Bus Inventory:** Real-time PCI and USB device scanning.
+- **Extreme Networking:** Public IP identification, geolocation (City/Country), and continuous latency (ping) monitoring.
+- **Professional HUD:** A high-density dashboard summarizing core vitals, neural pulses (history graphs), and electrical telemetry.
+- **Integrated Benchmarking:** Multi-threaded stress test and scoring engine to measure processor throughput.
+- **Reporting:** Instant JSON snapshots of the entire system state for auditing and logging.
+
+## Installation
+
+### Prerequisites
+- Rust (Stable)
 - Linux
-- Optional: NVIDIA drivers/NVML for NVIDIA GPU metrics
-- Optional: `lspci`, `xrandr` and `intel_gpu_top` for richer hardware details
+- Optional: `intel_gpu_top` (for Intel GPU metrics), `nvml` (for NVIDIA), `xrandr` (for display info).
 
-## Run
-
+### Build from source
 ```bash
-cargo run
+git clone https://github.com/marciolopes/TeuPC.git
+cd TeuPC
+cargo build --release
+./target/release/teupc
 ```
 
-## Controls
+## Navigation & Controls
+- **[1-7]**: Switch between tabs (Overview, Processes, Hardware, Network, Sensors, Bus, Bench).
+- **Tab / Arrows**: Navigate screens.
+- **Space**: Pause/Resume UI refresh.
+- **s**: Export technical JSON snapshot.
+- **b**: Start CPU stress test.
+- **q**: Quit.
 
-| Key | Action |
-| --- | --- |
-| `1` | Overview |
-| `2` | Processes |
-| `3` | Hardware-Z |
-| `4` | Network |
-| `?` or `h` | Help |
-| `Tab` / Right | Next screen |
-| `Shift+Tab` / Left | Previous screen |
-| Space | Pause/resume refresh |
-| `q` | Quit |
-| `c` | Sort processes by CPU |
-| `m` | Sort processes by memory |
-| `p` | Sort processes by PID |
-| `j` / `k` or Up / Down | Move process selection |
-
-## Notes
-
-The Network screen shows RX/TX sparklines for active interfaces plus current and total traffic counters.
-
-The app avoids privileged prompts while running. Intel GPU metrics are collected only when `intel_gpu_top` can run directly in the current environment; otherwise TeuPC keeps running and reports why usage is unavailable.
-
-On some systems, Intel GPU usage requires `CAP_PERFMON`. If the Hardware-Z screen reports that permission is missing, grant it outside the app with your normal admin workflow, for example:
-
-```bash
-sudo setcap cap_perfmon+ep /usr/bin/intel_gpu_top
-```
+## License
+Distributed under the MIT License. See `LICENSE` for more information.
