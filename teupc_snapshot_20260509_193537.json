@@ -1,0 +1,312 @@
+{
+  "metadata": {
+    "os": "Ubuntu 26.04",
+    "kernel": "7.0.0-14-generic",
+    "uptime": "20h 33m",
+    "shell": "/usr/bin/zsh",
+    "resolution": "1366x768",
+    "de": "i3",
+    "wm": "i3"
+  },
+  "motherboard": {
+    "vendor": "Positivo Tecnologia SA",
+    "name": "S14SL03",
+    "bios_version": "0101.X",
+    "bios_date": "09/07/2017"
+  },
+  "cpu_brand": "Intel(R) Core(TM) i3-6006U CPU @ 2.00GHz",
+  "cpu_flags": [
+    "fpu",
+    "vme",
+    "de",
+    "pse",
+    "tsc",
+    "msr",
+    "pae",
+    "mce",
+    "cx8",
+    "apic",
+    "sep",
+    "mtrr",
+    "pge",
+    "mca",
+    "cmov",
+    "pat",
+    "pse36",
+    "clflush",
+    "dts",
+    "acpi",
+    "mmx",
+    "fxsr",
+    "sse",
+    "sse2",
+    "ss",
+    "ht",
+    "tm",
+    "pbe",
+    "syscall",
+    "nx",
+    "pdpe1gb",
+    "rdtscp",
+    "lm",
+    "constant_tsc",
+    "art",
+    "arch_perfmon",
+    "pebs",
+    "bts",
+    "rep_good",
+    "nopl",
+    "xtopology",
+    "nonstop_tsc",
+    "cpuid",
+    "aperfmperf",
+    "pni",
+    "pclmulqdq",
+    "dtes64",
+    "monitor",
+    "ds_cpl",
+    "vmx",
+    "est",
+    "tm2",
+    "ssse3",
+    "sdbg",
+    "fma",
+    "cx16",
+    "xtpr",
+    "pdcm",
+    "pcid",
+    "sse4_1",
+    "sse4_2",
+    "x2apic",
+    "movbe",
+    "popcnt",
+    "tsc_deadline_timer",
+    "aes",
+    "xsave",
+    "avx",
+    "f16c",
+    "rdrand",
+    "lahf_lm",
+    "abm",
+    "3dnowprefetch",
+    "cpuid_fault",
+    "epb",
+    "pti",
+    "ssbd",
+    "ibrs",
+    "ibpb",
+    "stibp",
+    "tpr_shadow",
+    "flexpriority",
+    "ept",
+    "vpid",
+    "ept_ad",
+    "fsgsbase",
+    "tsc_adjust",
+    "bmi1",
+    "avx2",
+    "smep",
+    "bmi2",
+    "erms",
+    "invpcid",
+    "mpx",
+    "rdseed",
+    "adx",
+    "smap",
+    "clflushopt",
+    "intel_pt",
+    "xsaveopt",
+    "xsavec",
+    "xgetbv1",
+    "xsaves",
+    "dtherm",
+    "arat",
+    "pln",
+    "pts",
+    "hwp",
+    "hwp_notify",
+    "hwp_act_window",
+    "hwp_epp",
+    "vnmi",
+    "md_clear",
+    "flush_l1d",
+    "arch_capabilities"
+  ],
+  "mem_total": 8206462976,
+  "gpus": [
+    {
+      "name": "Intel GPU",
+      "vendor": "Intel",
+      "usage": 0,
+      "mem_used": 0,
+      "mem_total": 0,
+      "temp": null,
+      "driver": "i915/xe",
+      "clock_mhz": null,
+      "power_w": null,
+      "fan_speed": null,
+      "intel_details": {
+        "Render/3D": {
+          "busy": 0.0
+        },
+        "Video": {
+          "busy": 0.0
+        },
+        "Blitter": {
+          "busy": 0.0
+        },
+        "VideoEnhance": {
+          "busy": 0.0
+        }
+      },
+      "intel_frequency_mhz": 0.0,
+      "intel_power_w": 0.0,
+      "intel_package_power_w": 2.923368,
+      "intel_rc6": 100.0,
+      "status": null
+    }
+  ],
+  "disks": [
+    {
+      "name": "sda",
+      "model": "KBM SSD 256GB",
+      "read_kb_s": 5.990664172915585,
+      "write_kb_s": 31.95020892221645,
+      "total_read_gb": 16.225944995880127,
+      "total_write_gb": 25.69237232208252
+    }
+  ],
+  "pci": [
+    {
+      "slot": "00:00.0 \"Host bridge",
+      "vendor": "Intel Corporation",
+      "device": "Xeon E3-1200 v5/E3-1500 v5/6th Gen Core Processor Host Bridge/DRAM Registers\" -r08 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:02.0 \"VGA compatible controller",
+      "vendor": "Intel Corporation",
+      "device": "Skylake-U GT2 [HD Graphics 520]\" -r07 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:08.0 \"System peripheral",
+      "vendor": "Intel Corporation",
+      "device": "Xeon E3-1200 v5/v6 / E3-1500 v5 / 6th/7th/8th Gen Core Processor Gaussian Mixture Model\" -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:14.0 \"USB controller",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP USB 3.0 xHCI Controller\" -r21 -p30 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:14.2 \"Signal processing controller",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP Thermal subsystem\" -r21 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:15.0 \"Signal processing controller",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP Serial IO I2C Controller #0\" -r21 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:15.3 \"Signal processing controller",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP Serial IO I2C Controller #3\" -r21 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:16.0 \"Communication controller",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP CSME HECI #1\" -r21 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:17.0 \"SATA controller",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP SATA Controller [AHCI mode]\" -r21 -p01 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:1c.0 \"PCI bridge",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP PCI Express Root Port #1\" -rf1 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:1c.4 \"PCI bridge",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP PCI Express Root Port #5\" -rf1 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:1c.5 \"PCI bridge",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP PCI Express Root Port #6\" -rf1 -p00 \"Intel Corporation"
+    },
+    {
+      "slot": "00:1e.0 \"Signal processing controller",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP Serial IO UART Controller #0\" -r21 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:1e.4 \"SD Host controller",
+      "vendor": "Intel Corporation",
+      "device": "Device 9d2b\" -r21 -p01 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:1f.0 \"ISA bridge",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP LPC Controller\" -r21 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:1f.2 \"Memory controller",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP PMC\" -r21 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:1f.3 \"Audio device",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP HD Audio\" -r21 -p80 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "00:1f.4 \"SMBus",
+      "vendor": "Intel Corporation",
+      "device": "Sunrise Point-LP SMBus\" -r21 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "02:00.0 \"Unassigned class [ff00]",
+      "vendor": "Realtek Semiconductor Co., Ltd.",
+      "device": "RTL8411B PCI Express Card Reader\" -r01 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "02:00.1 \"Ethernet controller",
+      "vendor": "Realtek Semiconductor Co., Ltd.",
+      "device": "RTL8111/8168/8211/8411 PCI Express Gigabit Ethernet Controller\" -r12 -p00 \"Holco Enterprise Co, Ltd/Shuttle Computer"
+    },
+    {
+      "slot": "03:00.0 \"Network controller",
+      "vendor": "Intel Corporation",
+      "device": "Wireless 3165\" -r81 -p00 \"Intel Corporation"
+    }
+  ],
+  "usb": [
+    {
+      "id": "1d6b:0002",
+      "name": "Linux Foundation 2.0 root hub"
+    },
+    {
+      "id": "04f2:b589",
+      "name": "Chicony Electronics Co., Ltd HD Webcam"
+    },
+    {
+      "id": "8087:0a2a",
+      "name": "Intel Corp. Bluetooth wireless interface"
+    },
+    {
+      "id": "046d:c092",
+      "name": "Logitech, Inc. G102/G203 LIGHTSYNC Gaming Mouse"
+    },
+    {
+      "id": "c0f4:0ff5",
+      "name": "Usb KeyBoard Usb KeyBoard"
+    },
+    {
+      "id": "1d6b:0003",
+      "name": "Linux Foundation 3.0 root hub"
+    }
+  ]
+}

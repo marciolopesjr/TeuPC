@@ -1,14 +1,14 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Gauge, Paragraph, Row, Sparkline, Table, Tabs, Wrap},
+    widgets::{Block, Borders, Gauge, Paragraph, Row, Sparkline, Table, Tabs, Wrap, LineGauge},
     Frame,
 };
 
 use crate::app::{App, CurrentScreen, ProcessSort};
+use crate::monitor::SensorCategory;
 
 const BYTES_PER_GB: f64 = 1_073_741_824.0;
-const BYTES_PER_MB: f64 = 1_000_000.0;
 
 pub fn ui(f: &mut Frame, app: &App) {
     let size = f.size();
@@ -23,37 +23,42 @@ pub fn ui(f: &mut Frame, app: &App) {
         .split(chunks[0]);
 
     let titles = vec![
-        "[1] Geral",
-        "[2] Processos",
-        "[3] Hardware-Z",
-        "[4] Rede",
-        "[?] Ajuda",
+        " [1] GERAL ",
+        " [2] PROCESSOS ",
+        " [3] HARDWARE ",
+        " [4] REDE ",
+        " [5] SENSORES ",
+        " [6] BARRAMENTO ",
+        " [7] BENCHMARK ",
+        " [?] AJUDA ",
     ];
     let index = match app.current_screen {
         CurrentScreen::Overview => 0,
         CurrentScreen::Processes => 1,
         CurrentScreen::SystemInfo => 2,
         CurrentScreen::Network => 3,
-        CurrentScreen::Help => 4,
+        CurrentScreen::Sensors => 4,
+        CurrentScreen::Devices => 5,
+        CurrentScreen::Benchmarks => 6,
+        CurrentScreen::Help => 7,
     };
     f.render_widget(
         Tabs::new(titles)
-            .block(Block::default().title(" TeuPC Professional ").borders(Borders::ALL))
+            .block(Block::default().title(" TeuPC Professional | Monitor de Sistema ").borders(Borders::ALL))
             .select(index)
-            .style(Style::default().fg(Color::Cyan))
-            .highlight_style(Style::default().add_modifier(Modifier::BOLD).bg(Color::DarkGray)),
+            .style(Style::default().fg(Color::Gray))
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD).fg(Color::Cyan)),
         header_chunks[0],
     );
 
-    let hostname = app.monitor.get_hostname();
-    let pause_status = if app.paused { "PAUSADO" } else { "LIVE" };
+    let status = if app.paused { "[PAUSADO]" } else { "[AO VIVO]" };
+    let info_str = if let Some(meta) = &app.metadata {
+        format!(" {} | {} | {} ", status, meta.os, meta.uptime)
+    } else {
+        format!(" {} | INICIALIZANDO... ", status)
+    };
     f.render_widget(
-        Paragraph::new(format!(
-            " {} | Host: {} | Up: {}h ",
-            pause_status,
-            hostname,
-            app.monitor.get_uptime() / 3600
-        ))
+        Paragraph::new(info_str)
         .block(Block::default().borders(Borders::ALL))
         .alignment(ratatui::layout::Alignment::Right),
         header_chunks[1],
@@ -64,524 +69,255 @@ pub fn ui(f: &mut Frame, app: &App) {
         CurrentScreen::Processes => render_processes(f, app, chunks[1]),
         CurrentScreen::SystemInfo => render_hardware_z(f, app, chunks[1]),
         CurrentScreen::Network => render_network(f, app, chunks[1]),
+        CurrentScreen::Sensors => render_sensors(f, app, chunks[1]),
+        CurrentScreen::Devices => render_devices(f, app, chunks[1]),
+        CurrentScreen::Benchmarks => render_benchmarks(f, app, chunks[1]),
         CurrentScreen::Help => render_help(f, chunks[1]),
     }
 
-    let footer = " q sair | Tab/setas trocar tela | espaco pausar | ? ajuda";
-    f.render_widget(Paragraph::new(footer), chunks[2]);
+    let footer = " q: sair | s: snapshot | b: benchmark | Tab: trocar tela";
+    f.render_widget(Paragraph::new(footer).style(Style::default().fg(Color::DarkGray)), chunks[2]);
 }
 
 fn render_overview(f: &mut Frame, app: &App, area: Rect) {
-    let outer_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(5), Constraint::Min(0)])
-        .margin(1)
+    let main_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(25), // CPU Cores
+            Constraint::Min(0),          // Main Gauges & History
+            Constraint::Percentage(25), // Telemetry
+        ])
         .split(area);
 
-    render_summary(f, app, outer_chunks[0]);
-
-    let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
-        .split(outer_chunks[1]);
-
-    let cpus = app.monitor.get_all_cpus_usage();
+    // --- LEFT COLUMN: CORE VITALS ---
     let core_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(cpus.iter().map(|_| Constraint::Length(1)).collect::<Vec<_>>())
-        .split(chunks[0]);
-    for (i, (name, usage)) in cpus.iter().enumerate() {
+        .constraints(app.cpus.iter().map(|_| Constraint::Length(1)).collect::<Vec<_>>())
+        .split(main_layout[0]);
+    
+    for (i, (name, usage, freq)) in app.cpus.iter().enumerate() {
         if i < core_chunks.len() {
-            let percent = percent_from_f32(*usage);
+            let color = if *usage > 80.0 { Color::Red } else if *usage > 50.0 { Color::Yellow } else { Color::Green };
             f.render_widget(
-                Gauge::default()
-                    .block(Block::default().title(format!(" {} ", name)))
-                    .gauge_style(Style::default().fg(if percent > 80 {
-                        Color::Red
-                    } else {
-                        Color::Green
-                    }))
-                    .percent(percent)
-                    .label(format!("{:.0}%", usage)),
+                LineGauge::default()
+                    .block(Block::default().title(format!(" {} ({:.1}GHz)", name, freq / 1000.0)).title_style(Style::default().fg(Color::DarkGray)))
+                    .gauge_style(Style::default().fg(color))
+                    .ratio(*usage as f64 / 100.0),
                 core_chunks[i],
             );
         }
     }
 
+    // --- CENTER COLUMN: PERFORMANCE HUB ---
+    let center_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(8), // Global Gauges
+            Constraint::Min(0),    // CPU History
+            Constraint::Length(10), // IO Activity
+        ])
+        .split(main_layout[1]);
+
+    let gauge_row = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(center_layout[0]);
+
+    // CPU Global
+    f.render_widget(
+        Gauge::default()
+            .block(Block::default().title(" [ CARGA CPU GLOBAL ] ").borders(Borders::ALL))
+            .gauge_style(Style::default().fg(Color::Cyan))
+            .percent(percent_from_f32(app.global_cpu))
+            .label(format!("{:.1}%", app.global_cpu)),
+        gauge_row[0],
+    );
+
+    // RAM Global
+    let mem_percent = if app.mem_total == 0 { 0 } else { percent_from_f64(app.mem_used as f64 / app.mem_total as f64 * 100.0) };
+    f.render_widget(
+        Gauge::default()
+            .block(Block::default().title(" [ MEMORIA RAM ] ").borders(Borders::ALL))
+            .gauge_style(Style::default().fg(Color::Yellow))
+            .percent(mem_percent)
+            .label(format!("{:.1}/{:.1} GB", app.mem_used as f64 / BYTES_PER_GB, app.mem_total as f64 / BYTES_PER_GB)),
+        gauge_row[1],
+    );
+
+    // Main History
+    let history: Vec<u64> = app.cpu_history.iter().copied().collect();
+    f.render_widget(
+        Sparkline::default()
+            .block(Block::default().title(" [ HISTORICO DE CARGA CPU ] ").borders(Borders::LEFT | Borders::RIGHT))
+            .style(Style::default().fg(Color::Cyan))
+            .data(&history),
+        center_layout[1],
+    );
+
+    // IO Activity
+    let heartbeat_row = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(center_layout[2]);
+
+    let mut net_rx_pulse = vec![0u64; 120];
+    for hist in app.network_history.values() {
+        for (i, val) in hist.rx.iter().enumerate() {
+            if i < net_rx_pulse.len() { net_rx_pulse[i] += val; }
+        }
+    }
+    f.render_widget(
+        Sparkline::default()
+            .block(Block::default().title(" [ ATIVIDADE DE REDE ] ").borders(Borders::ALL))
+            .style(Style::default().fg(Color::Green))
+            .data(&net_rx_pulse),
+        heartbeat_row[0],
+    );
+
+    let mut disk_io_pulse = vec![0u64; 120];
+    for hist in app.disk_history.values() {
+        for (i, val) in hist.read.iter().enumerate() {
+            if i < disk_io_pulse.len() { disk_io_pulse[i] += val; }
+        }
+    }
+    f.render_widget(
+        Sparkline::default()
+            .block(Block::default().title(" [ ATIVIDADE DE DISCO ] ").borders(Borders::ALL))
+            .style(Style::default().fg(Color::Yellow))
+            .data(&disk_io_pulse),
+        heartbeat_row[1],
+    );
+
+    // --- RIGHT COLUMN: TELEMETRY ---
     let right_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3),
-            Constraint::Length(3),
-            Constraint::Min(0),
-            Constraint::Length(5),
+            Constraint::Length(8), // Thermals
+            Constraint::Length(8), // Power
+            Constraint::Min(0),    // External
         ])
-        .split(chunks[1]);
+        .split(main_layout[2]);
 
+    let temp_data: Vec<String> = app.sensors.iter()
+        .filter(|s| s.category == SensorCategory::Temperature)
+        .take(5)
+        .map(|s| format!(" {:<15} {:.0}°C", s.label, s.value))
+        .collect();
     f.render_widget(
-        Gauge::default()
-            .block(Block::default().title(" CPU Global ").borders(Borders::ALL))
-            .gauge_style(Style::default().fg(Color::Green))
-            .percent(percent_from_f32(app.monitor.get_global_cpu_usage())),
+        Paragraph::new(temp_data.join("\n"))
+            .block(Block::default().title(" [ TEMPERATURAS ] ").borders(Borders::ALL))
+            .style(Style::default().fg(Color::Red)),
         right_chunks[0],
     );
 
-    let (used_mem, total_mem, _, _) = app.monitor.get_memory_info();
-    let mem_percent = if total_mem == 0 {
-        0
-    } else {
-        percent_from_f64(used_mem as f64 / total_mem as f64 * 100.0)
-    };
+    let mut power_info = vec![
+        format!(" Governor:  {}", app.power.current_governor),
+    ];
+    if let Some(pl1) = app.power.pl1_w { power_info.push(format!(" PL1 Limit: {:.1}W", pl1)); }
+    for volt in app.sensors.iter().filter(|s| s.category == SensorCategory::Voltage).take(3) {
+        power_info.push(format!(" {:<10} {:.3}V", volt.label, volt.value));
+    }
     f.render_widget(
-        Gauge::default()
-            .block(Block::default().title(" RAM Usage ").borders(Borders::ALL))
-            .gauge_style(Style::default().fg(Color::Yellow))
-            .percent(mem_percent)
-            .label(format!(
-                "{:.1}/{:.1} GB",
-                used_mem as f64 / BYTES_PER_GB,
-                total_mem as f64 / BYTES_PER_GB
-            )),
+        Paragraph::new(power_info.join("\n"))
+            .block(Block::default().title(" [ ENERGIA / TDP ] ").borders(Borders::ALL))
+            .style(Style::default().fg(Color::Yellow)),
         right_chunks[1],
     );
 
-    let gpus = app.monitor.get_gpus();
-    if !gpus.is_empty() {
-        let gpu_constraints = gpus.iter().map(|_| Constraint::Length(4)).collect::<Vec<_>>();
-        let gpu_chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(gpu_constraints)
-            .split(right_chunks[2]);
-        for (i, gpu) in gpus.iter().enumerate() {
-            if i < gpu_chunks.len() {
-                let color = match gpu.vendor.as_str() {
-                    "NVIDIA" => Color::Green,
-                    "AMD" => Color::Red,
-                    _ => Color::Blue,
-                };
-                let usage = gpu.usage.unwrap_or(0).min(100);
-                let usage_label = gpu
-                    .usage
-                    .map(|value| format!("{}%", value.min(100)))
-                    .unwrap_or_else(|| "uso indisponivel".to_string());
-                let info = format!(
-                    "{} | VRAM: {:.1}/{:.1} GB{}",
-                    usage_label,
-                    gpu.mem_used as f64 / BYTES_PER_GB,
-                    gpu.mem_total as f64 / BYTES_PER_GB,
-                    gpu.temp.map(|t| format!(" | {}°C", t)).unwrap_or_default()
-                );
-                f.render_widget(
-                    Gauge::default()
-                        .block(
-                            Block::default()
-                                .title(format!(" {} ", gpu.name))
-                                .borders(Borders::ALL),
-                        )
-                        .gauge_style(Style::default().fg(color))
-                        .percent(usage as u16)
-                        .label(info),
-                    gpu_chunks[i],
-                );
-            }
-        }
-    } else {
-        f.render_widget(
-            Paragraph::new("Nenhuma GPU dedicada detectada ou driver sem metricas expostas.")
-                .block(Block::default().title(" GPU ").borders(Borders::ALL))
-                .wrap(Wrap { trim: true }),
-            right_chunks[2],
-        );
-    }
-
-    let cpu_history: Vec<u64> = app.cpu_history.iter().copied().collect();
-    f.render_widget(
-        Sparkline::default()
-            .block(Block::default().title(" CPU History ").borders(Borders::ALL))
-            .style(Style::default().fg(Color::Green))
-            .data(&cpu_history),
-        right_chunks[3],
-    );
-}
-
-fn render_summary(f: &mut Frame, app: &App, area: Rect) {
-    let cards = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-        ])
-        .split(area);
-
-    let cpu = percent_from_f32(app.monitor.get_global_cpu_usage());
-    let (used_mem, total_mem, _, _) = app.monitor.get_memory_info();
-    let mem_percent = if total_mem == 0 {
-        0
-    } else {
-        percent_from_f64(used_mem as f64 / total_mem as f64 * 100.0)
-    };
-    let process_count = app.monitor.get_processes().len();
-    let gpu_count = app.monitor.get_gpus().len();
-
-    let items = [
-        ("CPU", format!("{}%", cpu), Color::Green),
-        ("RAM", format!("{}%", mem_percent), Color::Yellow),
-        ("Processos", process_count.to_string(), Color::Cyan),
-        ("GPUs", gpu_count.to_string(), Color::Magenta),
+    let mut cloud_info = vec![
+        format!(" Latencia: {}ms", app.latency_ms.unwrap_or(0)),
     ];
-
-    for (i, (title, value, color)) in items.iter().enumerate() {
-        f.render_widget(
-            Paragraph::new(value.as_str())
-                .style(Style::default().fg(*color).add_modifier(Modifier::BOLD))
-                .block(Block::default().title(format!(" {} ", title)).borders(Borders::ALL))
-                .alignment(ratatui::layout::Alignment::Center),
-            cards[i],
-        );
+    if let Some(ip) = &app.public_ip {
+        cloud_info.push(format!(" IP: {}", ip.ip));
+        cloud_info.push(format!(" Loc: {}, {}", ip.city, ip.country));
     }
+    f.render_widget(
+        Paragraph::new(cloud_info.join("\n"))
+            .block(Block::default().title(" [ REDE EXTERNA ] ").borders(Borders::ALL))
+            .style(Style::default().fg(Color::Blue)),
+        right_chunks[2],
+    );
 }
 
 fn render_processes(f: &mut Frame, app: &App, area: Rect) {
-    let mut processes = app.monitor.get_processes();
+    let mut processes = app.processes.clone();
     match app.process_sort {
-        ProcessSort::Cpu => {
-            processes.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal))
-        }
+        ProcessSort::Cpu => processes.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal)),
         ProcessSort::Memory => processes.sort_by(|a, b| b.3.cmp(&a.3)),
         ProcessSort::Pid => processes.sort_by(|a, b| a.0.cmp(&b.0)),
     }
-    let sort_label = match app.process_sort {
-        ProcessSort::Cpu => "CPU",
-        ProcessSort::Memory => "RAM",
-        ProcessSort::Pid => "PID",
-    };
     let selected_pid = processes.get(app.selected_process).map(|p| p.0);
-    let rows: Vec<Row> = processes
-        .iter()
-        .take(area.height.saturating_sub(3) as usize)
-        .map(|(pid, name, cpu, mem, status)| {
-            let marker = if Some(*pid) == selected_pid { ">" } else { " " };
-            let style = if Some(*pid) == selected_pid {
-                Style::default().fg(Color::Black).bg(Color::Cyan)
-            } else {
-                Style::default()
-            };
-            Row::new(vec![
-                marker.to_string(),
-                pid.to_string(),
-                name.clone(),
-                status.clone(),
-                format!("{:.1}%", cpu),
-                format!("{} MB", mem / 1024 / 1024),
-            ])
-            .style(style)
-        })
-        .collect();
-    let title = format!(
-        " Processos | ordenado por {} | c CPU, m RAM, p PID | j/k selecionar ",
-        sort_label
-    );
-    f.render_widget(
-        Table::new(
-            rows,
-            [
-                Constraint::Length(2),
-                Constraint::Length(8),
-                Constraint::Min(20),
-                Constraint::Length(10),
-                Constraint::Length(8),
-                Constraint::Length(12),
-            ],
-        )
-            .header(
-                Row::new(vec!["", "PID", "Nome", "Status", "CPU", "Memory"])
-                    .style(Style::default().add_modifier(Modifier::BOLD))
-                    .bottom_margin(1),
-            )
-            .block(Block::default().title(title).borders(Borders::ALL)),
-        area,
-    );
+    let rows: Vec<Row> = processes.iter().take(area.height.saturating_sub(3) as usize).map(|(pid, name, cpu, mem, status)| {
+        let style = if Some(*pid) == selected_pid { Style::default().fg(Color::Black).bg(Color::Cyan) } else { Style::default() };
+        Row::new(vec![pid.to_string(), name.clone(), status.clone(), format!("{:.1}%", cpu), format!("{} MB", mem / 1024 / 1024)]).style(style)
+    }).collect();
+    f.render_widget(Table::new(rows, [Constraint::Length(8), Constraint::Min(20), Constraint::Length(10), Constraint::Length(8), Constraint::Length(12)])
+        .header(Row::new(vec!["PID", "NOME", "STATUS", "CPU%", "RAM"]).style(Style::default().add_modifier(Modifier::BOLD)))
+        .block(Block::default().title(" PROCESSOS DO SISTEMA ").borders(Borders::ALL)), area);
 }
 
 fn render_hardware_z(f: &mut Frame, app: &App, area: Rect) {
-    let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
-        .margin(1)
-        .split(area);
-
-    let meta = app.monitor.get_metadata();
-    let sys_specs = vec![
-        "  [OS]".to_string(),
-        format!("  Distro:   {}", meta.os),
-        format!("  Kernel:   {}", meta.kernel),
-        format!("  Uptime:   {}", meta.uptime),
-        String::new(),
-        "  [USER SPACE]".to_string(),
-        format!("  Shell:    {}", meta.shell),
-        format!("  DE:       {}", meta.de),
-        format!("  WM:       {}", meta.wm),
-        format!("  Display:  {}", meta.resolution),
-    ];
-    f.render_widget(
-        Paragraph::new(sys_specs.join("\n")).block(
-            Block::default()
-                .title(" Screenfetch Style Info ")
-                .borders(Borders::ALL),
-        ),
-        chunks[0],
-    );
-
-    let right_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(8), Constraint::Min(0)])
-        .split(chunks[1]);
-
-    let cpu_specs = vec![
-        "  [CPU]".to_string(),
-        format!("  Model:    {}", app.monitor.get_cpu_brand()),
-        format!("  Cores:    {} Logical", app.monitor.get_all_cpus_usage().len()),
-    ];
-    f.render_widget(
-        Paragraph::new(cpu_specs.join("\n")).block(
-            Block::default()
-                .title(" Processor ")
-                .borders(Borders::ALL),
-        ),
-        right_chunks[0],
-    );
-
-    let gpus = app.monitor.get_gpus();
-    let mut gpu_specs = vec!["  [GPU ANALYTICS]".to_string()];
-    if gpus.is_empty() {
-        gpu_specs.push("  Nenhuma GPU com metricas disponiveis.".to_string());
+    let chunks = Layout::default().direction(Direction::Horizontal).constraints([Constraint::Percentage(40), Constraint::Percentage(60)]).margin(1).split(area);
+    let mut sys_specs = vec![" [DADOS DO SISTEMA]".to_string()];
+    if let Some(meta) = &app.metadata {
+        sys_specs.push(format!(" OS:    {}", meta.os));
+        sys_specs.push(format!(" KERN:  {}", meta.kernel));
     }
-    for gpu in gpus {
-        gpu_specs.push(String::new());
-        gpu_specs.push(format!("  Name:    {}", gpu.name));
-        gpu_specs.push(format!("  Driver:  {}", gpu.driver));
+    sys_specs.push(format!(" MB:    {}", app.motherboard.name));
+    sys_specs.push(format!(" BIOS:  {}", app.motherboard.bios_version));
+    
+    f.render_widget(Paragraph::new(sys_specs.join("\n")).block(Block::default().title(" DADOS DE HARDWARE ").borders(Borders::ALL)), chunks[0]);
 
-        if let Some(intel) = &gpu.intel_details {
-            if let Some(r) = &intel.render {
-                gpu_specs.push(format!("  Render:  {:.1}%", r.busy));
-            }
-            if let Some(v) = &intel.video {
-                gpu_specs.push(format!("  Video:   {:.1}%", v.busy));
-            }
-            if let Some(v) = &intel.video_enhance {
-                gpu_specs.push(format!("  VEnhance:{:.1}%", v.busy));
-            }
-            if let Some(b) = &intel.blitter {
-                gpu_specs.push(format!("  Blitter: {:.1}%", b.busy));
-            }
-            if let Some(freq) = gpu.intel_frequency_mhz {
-                gpu_specs.push(format!("  Clock:   {:.0} MHz", freq));
-            }
-            if let Some(power) = gpu.intel_power_w {
-                gpu_specs.push(format!("  GPU W:   {:.1} W", power));
-            }
-            if let Some(power) = gpu.intel_package_power_w {
-                gpu_specs.push(format!("  Pkg W:   {:.1} W", power));
-            }
-            if let Some(rc6) = gpu.intel_rc6 {
-                gpu_specs.push(format!("  RC6:     {:.1}%", rc6));
-            }
-        } else {
-            if let Some(c) = gpu.clock_mhz {
-                gpu_specs.push(format!("  Clock:   {} MHz", c));
-            }
-            if let Some(p) = gpu.power_w {
-                gpu_specs.push(format!("  Power:   {} W", p));
-            }
-        }
-        if let Some(status) = &gpu.status {
-            gpu_specs.push(format!("  Status:  {}", status));
-        }
-        gpu_specs.push(format!(
-            "  VRAM:    {:.1} GB Total",
-            gpu.mem_total as f64 / BYTES_PER_GB
-        ));
-    }
+    let right_chunks = Layout::default().direction(Direction::Vertical).constraints([Constraint::Length(10), Constraint::Min(0)]).split(chunks[1]);
+    let cpu_specs = format!(" MODELO: {}\n CORES: {}\n CACHE: L1:{} L2:{} L3:{}", app.cpu_brand, app.cpus.len(), app.cpu_cache.l1d, app.cpu_cache.l2, app.cpu_cache.l3);
+    f.render_widget(Paragraph::new(cpu_specs).block(Block::default().title(" PROCESSADOR ").borders(Borders::ALL)), right_chunks[0]);
 
-    let disks = app.monitor.get_disks_info();
-    gpu_specs.push(String::new());
-    gpu_specs.push("  [STORAGE]".to_string());
-    for (mount, _, total) in disks {
-        gpu_specs.push(format!(
-            "  {} - {:.1} GB",
-            mount,
-            total as f64 / BYTES_PER_GB
-        ));
-    }
-
-    f.render_widget(
-        Paragraph::new(gpu_specs.join("\n")).block(
-            Block::default()
-                .title(" Hardware Analytics ")
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::Yellow)),
-        ),
-        right_chunks[1],
-    );
+    let mut drives = vec![" [DISPOSITIVOS FISICOS]".to_string()];
+    for disk in &app.disk_stats { drives.push(format!(" {}: {} [L:{:.1} KB/s]", disk.name, disk.model, disk.read_kb_s)); }
+    f.render_widget(Paragraph::new(drives.join("\n")).block(Block::default().title(" ARMAZENAMENTO ").borders(Borders::ALL)), right_chunks[1]);
 }
 
 fn render_network(f: &mut Frame, app: &App, area: Rect) {
-    let networks = app.monitor.get_networks_info();
-    if networks.is_empty() {
-        f.render_widget(
-            Paragraph::new("Nenhuma interface de rede detectada.")
-                .block(Block::default().title(" Network Activity ").borders(Borders::ALL)),
-            area,
-        );
-        return;
-    }
-
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(58), Constraint::Percentage(42)])
-        .margin(1)
-        .split(area);
-
-    render_network_graphs(f, app, chunks[0]);
-
-    let rows: Vec<Row> = networks
-        .iter()
-        .map(|network| {
-            Row::new(vec![
-                network.name.clone(),
-                format_bytes_per_sec(network.rx_per_sec),
-                format_bytes_per_sec(network.tx_per_sec),
-                format!("{:.1} MB", network.rx_total as f64 / BYTES_PER_MB),
-                format!("{:.1} MB", network.tx_total as f64 / BYTES_PER_MB),
-            ])
-        })
-        .collect();
-
-    f.render_widget(
-        Table::new(
-            rows,
-            [
-                Constraint::Min(20),
-                Constraint::Length(14),
-                Constraint::Length(14),
-                Constraint::Length(16),
-                Constraint::Length(16),
-            ],
-        )
-            .header(
-                Row::new(vec!["Interface", "RX/s", "TX/s", "Total RX", "Total TX"])
-                    .style(Style::default().add_modifier(Modifier::BOLD))
-                    .bottom_margin(1),
-            )
-            .block(Block::default().title(" Network Activity ").borders(Borders::ALL)),
-        chunks[1],
-    );
+    let rows: Vec<Row> = app.networks.iter().map(|n| {
+        Row::new(vec![n.name.clone(), n.ipv4.clone(), format!("{:.1}GB", n.rx_total as f64 / BYTES_PER_GB), format_bytes_per_sec(n.rx_per_sec)])
+    }).collect();
+    f.render_widget(Table::new(rows, [Constraint::Length(10), Constraint::Length(15), Constraint::Length(10), Constraint::Length(15)])
+        .header(Row::new(vec!["IFACE", "IP", "TOTAL", "TAXA"]).style(Style::default().add_modifier(Modifier::BOLD)))
+        .block(Block::default().title(" INTERFACES DE REDE ").borders(Borders::ALL)), area);
 }
 
-fn render_network_graphs(f: &mut Frame, app: &App, area: Rect) {
-    let networks = app.monitor.get_networks_info();
-    let visible_count = networks.len().min(3);
-    let constraints = (0..visible_count)
-        .map(|_| Constraint::Ratio(1, visible_count as u32))
-        .collect::<Vec<_>>();
-    let interface_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(constraints)
-        .split(area);
+fn render_sensors(f: &mut Frame, app: &App, area: Rect) {
+    let chunks = Layout::default().direction(Direction::Horizontal).constraints([Constraint::Percentage(33), Constraint::Percentage(33), Constraint::Percentage(34)]).margin(1).split(area);
+    let temps: Vec<Row> = app.sensors.iter().filter(|s| s.category == SensorCategory::Temperature).map(|s| Row::new(vec![s.label.clone(), format!("{:.1}°C", s.value)])).collect();
+    f.render_widget(Table::new(temps, [Constraint::Min(20), Constraint::Length(10)]).block(Block::default().title(" TERMICO ").borders(Borders::ALL)), chunks[0]);
+    
+    let volts: Vec<Row> = app.sensors.iter().filter(|s| s.category == SensorCategory::Voltage).map(|s| Row::new(vec![s.label.clone(), format!("{:.3}V", s.value)])).collect();
+    f.render_widget(Table::new(volts, [Constraint::Min(20), Constraint::Length(10)]).block(Block::default().title(" VOLTAGENS ").borders(Borders::ALL)), chunks[1]);
 
-    for (i, network) in networks.iter().take(visible_count).enumerate() {
-        let pair_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(interface_chunks[i]);
+    let fans: Vec<Row> = app.sensors.iter().filter(|s| s.category == SensorCategory::Fan).map(|s| Row::new(vec![s.label.clone(), format!("{:.0}RPM", s.value)])).collect();
+    f.render_widget(Table::new(fans, [Constraint::Min(20), Constraint::Length(10)]).block(Block::default().title(" COOLERS ").borders(Borders::ALL)), chunks[2]);
+}
 
-        let Some(history) = app.network_history.get(&network.name) else {
-            continue;
-        };
-        let rx_history = history.rx.iter().copied().collect::<Vec<_>>();
-        let tx_history = history.tx.iter().copied().collect::<Vec<_>>();
+fn render_devices(f: &mut Frame, app: &App, area: Rect) {
+    let pci: Vec<Row> = app.pci_devices.iter().map(|d| Row::new(vec![d.slot.clone(), d.vendor.clone(), d.device.clone()])).collect();
+    f.render_widget(Table::new(pci, [Constraint::Length(8), Constraint::Percentage(30), Constraint::Percentage(60)]).header(Row::new(vec!["SLOT", "FABRICANTE", "DISPOSITIVO"])).block(Block::default().title(" BARRAMENTO PCI ").borders(Borders::ALL)), area);
+}
 
-        f.render_widget(
-            Sparkline::default()
-                .block(
-                    Block::default()
-                        .title(format!(
-                            " {} RX {} ",
-                            network.name,
-                            format_bytes_per_sec(network.rx_per_sec)
-                        ))
-                        .borders(Borders::ALL),
-                )
-                .style(Style::default().fg(Color::Cyan))
-                .data(&rx_history),
-            pair_chunks[0],
-        );
-        f.render_widget(
-            Sparkline::default()
-                .block(
-                    Block::default()
-                        .title(format!(
-                            " {} TX {} ",
-                            network.name,
-                            format_bytes_per_sec(network.tx_per_sec)
-                        ))
-                        .borders(Borders::ALL),
-                )
-                .style(Style::default().fg(Color::Yellow))
-                .data(&tx_history),
-            pair_chunks[1],
-        );
-    }
+fn render_benchmarks(f: &mut Frame, app: &App, area: Rect) {
+    let chunks = Layout::default().direction(Direction::Vertical).constraints([Constraint::Length(3), Constraint::Min(0)]).margin(1).split(area);
+    f.render_widget(Paragraph::new(format!(" STATUS: {}", if app.benchmark.is_running { "TESTE EM EXECUCAO..." } else { "PRONTO" })).block(Block::default().title(" CONTROLE DE BENCHMARK ").borders(Borders::ALL)), chunks[0]);
+    f.render_widget(LineGauge::default().block(Block::default().title(" PROGRESSO ")).gauge_style(Style::default().fg(Color::Yellow)).ratio(app.benchmark.progress as f64 / 100.0), chunks[1]);
 }
 
 fn render_help(f: &mut Frame, area: Rect) {
-    let text = [
-        "TeuPC monitora CPU, memoria, processos, hardware, GPU e rede em tempo real.",
-        "",
-        "Navegacao",
-        "  1 Geral    2 Processos    3 Hardware-Z    4 Rede    ? Ajuda",
-        "  Tab / seta direita: proxima tela",
-        "  Shift+Tab / seta esquerda: tela anterior",
-        "",
-        "Controles",
-        "  espaco: pausar ou retomar refresh",
-        "  q: sair",
-        "",
-        "Processos",
-        "  c: ordenar por CPU",
-        "  m: ordenar por RAM",
-        "  p: ordenar por PID",
-        "  j/k ou setas cima/baixo: mover selecao",
-        "",
-        "Notas",
-        "  NVIDIA usa NVML quando disponivel.",
-        "  AMD/Intel usam metricas expostas pelo kernel e ferramentas locais quando permitidas.",
-    ];
-
-    f.render_widget(
-        Paragraph::new(text.join("\n"))
-            .block(Block::default().title(" Ajuda ").borders(Borders::ALL))
-            .wrap(Wrap { trim: false }),
-        area,
-    );
+    let text = ["TEUPC PROFESSIONAL DIAGNOSTIC", "", "1 GERAL      (Painel HUD)", "2 PROCESSOS  (Lista de tarefas)", "3 HARDWARE   (Dados tecnicos)", "4 REDE       (Tráfego e IP)", "5 SENSORES   (Temp/Volt/RPM)", "6 BARRAMENTO (PCI/USB)", "7 BENCHMARK  (Stress Test)", "", "s: snapshot | b: benchmark | q: sair"];
+    f.render_widget(Paragraph::new(text.join("\n")).block(Block::default().title(" AJUDA ").borders(Borders::ALL)), area);
 }
 
-fn percent_from_f32(value: f32) -> u16 {
-    percent_from_f64(value as f64)
-}
-
-fn percent_from_f64(value: f64) -> u16 {
-    value.clamp(0.0, 100.0).round() as u16
-}
-
+fn percent_from_f32(value: f32) -> u16 { value.clamp(0.0, 100.0) as u16 }
+fn percent_from_f64(value: f64) -> u16 { value.clamp(0.0, 100.0) as u16 }
 fn format_bytes_per_sec(bytes: u64) -> String {
-    if bytes >= 1_000_000 {
-        format!("{:.1} MB/s", bytes as f64 / 1_000_000.0)
-    } else if bytes >= 1_000 {
-        format!("{:.1} KB/s", bytes as f64 / 1_000.0)
-    } else {
-        format!("{} B/s", bytes)
-    }
+    if bytes >= 1_000_000 { format!("{:.1}MB/s", bytes as f64 / 1_000_000.0) }
+    else if bytes >= 1_000 { format!("{:.1}KB/s", bytes as f64 / 1_000.0) }
+    else { format!("{}B/s", bytes) }
 }
