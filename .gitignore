@@ -1,1 +1,11 @@
 /target
+
+# Artefatos locais do agente: configuração com chave de API, log de eventos e snapshots
+teupc_agent.json
+teupc_events.log
+teupc_snapshot_*.json
+.teucodigo/
+
+# Banco e artefatos do hub
+server/database/*.sqlite
+server/database/*.sqlite-*

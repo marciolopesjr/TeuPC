@@ -1,0 +1,9 @@
+{
+  "server_url": "http://127.0.0.1:8000",
+  "api_key": "TROQUE_PELA_MESMA_CHAVE_DE_TEUPC_API_KEY_DO_HUB",
+  "interval_seconds": 5,
+  "machine_name": null,
+  "machine_id": null,
+  "push_snapshot_on_start": true,
+  "verbose": true
+}

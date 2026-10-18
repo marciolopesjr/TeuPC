@@ -1,0 +1,26 @@
+[Unit]
+Description=TeuPC Monitoring Daemon Agent
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/lib/teupc
+StateDirectory=teupc
+ExecStart=/usr/local/bin/teupc --daemon --config /etc/teupc/agent.json
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+AmbientCapabilities=CAP_PERFMON CAP_SYS_ADMIN CAP_NET_ADMIN
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target
