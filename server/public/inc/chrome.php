@@ -6,7 +6,7 @@
 //   ... conteudo da pagina ...
 //   chrome_end();
 
-require_once __DIR__ . '/../src/Auth.php';
+require_once __DIR__ . '/../../src/Auth.php';
 
 use TeuPC\Central\Auth;
 
