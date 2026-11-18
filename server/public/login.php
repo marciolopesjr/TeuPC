@@ -31,28 +31,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ TeuPC Central | Acesso restrito</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>TeuPC Central | Acesso restrito</title>
     <style>
-        body { background-color: #06080d; color: #e2e8f0; font-family: ui-monospace, monospace; }
+        @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap');
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+            background: #151515; color: #f2f2f2;
+            font-family: 'Red Hat Text', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .card {
+            width: 100%; max-width: 400px; background: #1f1f1f;
+            border: 1px solid #2f2f2f; border-radius: 8px; padding: 2.25rem;
+        }
+        .brand { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.75rem; }
+        .mark {
+            width: 34px; height: 34px; border-radius: 6px; background: #EE0000; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Red Hat Display', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: -0.5px;
+        }
+        .brand-name { font-family: 'Red Hat Display', sans-serif; font-weight: 700; font-size: 1.05rem; letter-spacing: 0.02em; }
+        .brand-name span { color: #8a8a8a; font-weight: 500; }
+        .hint { color: #a1a1a1; font-size: 0.825rem; line-height: 1.5; margin: 0 0 1.25rem; }
+        label { display: block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8a8a8a; margin-bottom: 0.4rem; }
+        input {
+            width: 100%; background: #151515; border: 1px solid #3f3f3f; border-radius: 4px;
+            padding: 0.65rem 0.75rem; color: #f2f2f2; font-size: 0.875rem; font-family: 'Red Hat Mono', monospace;
+            outline: none; transition: border-color .15s ease;
+        }
+        input:focus { border-color: #EE0000; }
+        input::placeholder { color: #5c5c5c; }
+        button {
+            width: 100%; margin-top: 1.25rem; background: #EE0000; color: #fff; border: none; border-radius: 4px;
+            padding: 0.65rem 1rem; font-size: 0.875rem; font-weight: 600; font-family: 'Red Hat Text', sans-serif;
+            cursor: pointer; transition: background .15s ease;
+        }
+        button:hover { background: #c40000; }
+        .error {
+            color: #ff6b6b; background: rgba(238,0,0,.08); border: 1px solid rgba(238,0,0,.35);
+            border-radius: 4px; padding: 0.6rem 0.75rem; font-size: 0.8rem; margin: 0 0 1rem;
+        }
+        .foot { margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid #2f2f2f; font-family: 'Red Hat Mono', monospace; font-size: 0.7rem; color: #6b6b6b; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-    <form method="post" class="w-full max-w-sm bg-[#0e1420] border border-[#1b263b] rounded-xl p-6 space-y-4">
-        <h1 class="text-sm font-bold tracking-widest text-cyan-400">⚡ TEUPC CENTRAL</h1>
-        <p class="text-xs text-gray-400">Informe a API Key do hub para abrir o dashboard.</p>
+<body>
+    <form method="post" class="card">
+        <div class="brand">
+            <div class="mark">T</div>
+            <div class="brand-name">TeuPC <span>Central</span></div>
+        </div>
+        <p class="hint">Informe a API Key do hub para abrir o dashboard.</p>
 
         <?php if ($error !== null): ?>
-            <p class="text-xs text-red-400 border border-red-500/30 bg-red-500/10 rounded p-2"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
+            <p class="error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
         <?php endif; ?>
 
-        <input type="password" name="api_key" autofocus autocomplete="current-password"
-               class="w-full bg-[#070a10] border border-[#1b263b] rounded px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"
-               placeholder="API Key">
-        <button type="submit"
-                class="w-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 rounded px-3 py-2 text-sm font-bold hover:bg-cyan-500/30 transition">
-            Entrar
-        </button>
+        <label for="api_key">API Key</label>
+        <input type="password" id="api_key" name="api_key" autofocus autocomplete="current-password"
+               placeholder="••••••••••••••••">
+        <button type="submit">Entrar</button>
+
+        <div class="foot">NOC &middot; Telemetria de hardware em tempo real</div>
     </form>
 </body>
 </html>

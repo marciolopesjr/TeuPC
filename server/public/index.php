@@ -14,31 +14,27 @@ if (isset($_GET['logout'])) {
 Auth::requireDashboard();
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ TeuPC Central | NOC Dashboard & Hardware Telemetry</title>
+    <title>TeuPC Central | NOC Dashboard &amp; Hardware Telemetry</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            dark: '#070a10',
-                            card: '#0e1420',
-                            cardHover: '#141d2e',
-                            border: '#1b263b',
-                            cyan: '#00f0ff',
-                            green: '#00ff66',
-                            yellow: '#ffb700',
-                            red: '#ff0055',
-                            purple: '#a855f7',
-                        }
-                    }
+                        ink:    { 900: '#0f0f0f', 800: '#151515', 700: '#1f1f1f', 600: '#262626', 500: '#2f2f2f', 400: '#3f3f3f' },
+                        fg:     { DEFAULT: '#f2f2f2', mid: '#a1a1a1', dim: '#6b6b6b' },
+                        rh:     { red: '#EE0000', reddark: '#c40000', blue: '#0088CE', teal: '#00B8AF', green: '#4CA64C', amber: '#F0AB00' },
+                    },
+                    fontFamily: {
+                        ui:   ['"Red Hat Text"', 'system-ui', 'sans-serif'],
+                        disp: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
+                        mono: ['"Red Hat Mono"', 'ui-monospace', 'monospace'],
+                    },
                 }
             }
         }
@@ -48,94 +44,69 @@ Auth::requireDashboard();
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap');
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background-color: #06080d;
-            color: #e2e8f0;
-        }
-        .glow-cyan {
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
-        }
-        .glow-green {
-            box-shadow: 0 0 15px rgba(0, 255, 102, 0.25);
-        }
-        .glow-red {
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.35);
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #090d15;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #334155;
-        }
-        .scanline {
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800&family=Red+Hat+Text:wght@400;500;600;700&family=Red+Hat+Mono:wght@400;500;600&display=swap');
+        body { font-family: 'Red Hat Text', system-ui, sans-serif; background: #0f0f0f; color: #f2f2f2; }
+        ::selection { background: rgba(238,0,0,.25); color: #fff; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f3f; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #5c5c5c; }
+        .card { background: #1f1f1f; border: 1px solid #2f2f2f; border-radius: 8px; }
+        .panel { background: #151515; border: 1px solid #2f2f2f; border-radius: 6px; }
+        .label { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #8a8a8a; }
+        .pulse { animation: pulse 2.4s cubic-bezier(.4,0,.6,1) infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+        .tab-active { border-color: #EE0000; color: #f2f2f2; background: #262626; }
+        .tab-idle   { border-color: transparent; color: #a1a1a1; background: transparent; }
+        .tab-idle:hover { color: #f2f2f2; background: #1f1f1f; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
+<body class="min-h-screen flex flex-col antialiased">
 
     <!-- Top Navigation Header -->
-    <header class="bg-brand-card/95 border-b border-brand-border/80 backdrop-blur sticky top-0 z-50 px-4 lg:px-8 py-3.5">
+    <header class="bg-ink-800 border-b border-ink-500 sticky top-0 z-50 px-4 lg:px-8 py-3">
         <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-4">
-            
+
             <!-- Logo & Brand Title -->
-            <div class="flex items-center gap-3.5">
-                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-black text-xl glow-cyan">
-                    <i class="fas fa-bolt"></i>
-                </div>
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-md bg-rh-red flex items-center justify-center font-disp font-extrabold text-white text-base">T</div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="text-base font-extrabold tracking-wider text-white">
-                            TeuPC <span class="text-cyan-400">CENTRAL</span>
-                        </h1>
-                        <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold tracking-widest uppercase">
-                            NOC v2.0
-                        </span>
+                        <h1 class="font-disp text-[15px] font-bold tracking-tight text-fg leading-none">TeuPC <span class="text-fg-dim font-medium">Central</span></h1>
+                        <span class="text-[9px] px-1.5 py-px rounded bg-ink-600 border border-ink-400 text-fg-mid font-mono tracking-widest uppercase">NOC v2.0</span>
                     </div>
-                    <p class="text-[11px] text-gray-400 tracking-tight">Centro de Comando & Telemetria em Tempo Real</p>
+                    <p class="text-[11px] text-fg-dim leading-tight mt-0.5">Centro de comando &amp; telemetria em tempo real</p>
                 </div>
             </div>
 
             <!-- Global Controls & Status -->
-            <div class="flex flex-wrap items-center gap-4 text-xs">
-                
+            <div class="flex flex-wrap items-center gap-3 text-xs">
+
                 <!-- Refresh Interval Selector -->
-                <div class="flex items-center bg-brand-dark border border-brand-border rounded-lg px-2.5 py-1.5 gap-2">
-                    <i class="fas fa-arrows-rotate text-cyan-400" id="refresh-spinner"></i>
-                    <span class="text-gray-400 text-[11px]">Intervalo:</span>
-                    <select id="select-interval" onchange="changeInterval(this.value)" class="bg-transparent text-gray-200 font-semibold focus:outline-none cursor-pointer text-xs">
-                        <option value="1000" class="bg-brand-card">1s (Rápido)</option>
-                        <option value="2000" class="bg-brand-card" selected>2s (Normal)</option>
-                        <option value="5000" class="bg-brand-card">5s (Econômico)</option>
-                        <option value="0" class="bg-brand-card">Pausado</option>
+                <div class="flex items-center bg-ink-900 border border-ink-500 rounded-md px-2.5 py-1.5 gap-2">
+                    <i class="fas fa-arrows-rotate text-fg-dim" id="refresh-spinner"></i>
+                    <span class="text-fg-dim text-[11px]">Intervalo:</span>
+                    <select id="select-interval" onchange="changeInterval(this.value)" class="bg-transparent text-fg font-medium focus:outline-none cursor-pointer text-xs">
+                        <option value="1000" class="bg-ink-700">1s (Rápido)</option>
+                        <option value="2000" class="bg-ink-700" selected>2s (Normal)</option>
+                        <option value="5000" class="bg-ink-700">5s (Econômico)</option>
+                        <option value="0" class="bg-ink-700">Pausado</option>
                     </select>
                 </div>
 
                 <!-- Connection Pulse -->
-                <div class="flex items-center gap-2 bg-brand-dark border border-brand-border rounded-lg px-3 py-1.5">
-                    <span id="status-pulse-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="server-status" class="text-gray-200 font-medium text-[11px]">Conectado</span>
+                <div class="flex items-center gap-2 bg-ink-900 border border-ink-500 rounded-md px-3 py-1.5">
+                    <span id="status-pulse-dot" class="w-2 h-2 rounded-full bg-rh-green pulse"></span>
+                    <span id="server-status" class="text-fg font-medium text-[11px]">Conectado</span>
                 </div>
 
                 <!-- Server Time Clock -->
-                <div class="hidden sm:flex items-center gap-1.5 bg-brand-dark border border-brand-border rounded-lg px-3 py-1.5 text-gray-300 font-mono text-[11px]">
-                    <i class="far fa-clock text-cyan-400"></i>
+                <div class="hidden sm:flex items-center gap-1.5 bg-ink-900 border border-ink-500 rounded-md px-3 py-1.5 text-fg-mid font-mono text-[11px]">
+                    <i class="far fa-clock text-fg-dim"></i>
                     <span id="server-time">--:--:--</span>
                 </div>
 
-                <a href="?logout=1" class="bg-brand-dark border border-brand-border rounded-lg px-3 py-1.5 text-gray-400 hover:text-red-400 font-mono text-[11px]">
+                <a href="?logout=1" class="bg-ink-900 border border-ink-500 rounded-md px-3 py-1.5 text-fg-mid hover:text-fg hover:border-ink-400 text-[11px] transition-colors">
                     <i class="fas fa-right-from-bracket mr-1"></i>Sair
                 </a>
 
@@ -148,44 +119,36 @@ Auth::requireDashboard();
 
         <!-- Global Metric Stat Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-            <div class="bg-brand-card border border-brand-border rounded-xl p-4 flex items-center justify-between hover:border-cyan-500/40 transition">
+            <div class="card p-4 flex items-center justify-between hover:border-ink-400 transition-colors">
                 <div>
-                    <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1">MÁQUINAS TOTAIS</span>
-                    <span id="metric-total-machines" class="text-2xl lg:text-3xl font-extrabold text-white font-mono">0</span>
+                    <span class="label block mb-1.5">Máquinas totais</span>
+                    <span id="metric-total-machines" class="text-2xl lg:text-3xl font-disp font-bold text-fg font-mono">0</span>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-lg">
-                    <i class="fas fa-server"></i>
-                </div>
+                <i class="fas fa-server text-fg-dim text-lg"></i>
             </div>
 
-            <div class="bg-brand-card border border-brand-border rounded-xl p-4 flex items-center justify-between hover:border-emerald-500/40 transition">
+            <div class="card p-4 flex items-center justify-between hover:border-ink-400 transition-colors">
                 <div>
-                    <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1">HOSTS ONLINE</span>
-                    <span id="metric-online-machines" class="text-2xl lg:text-3xl font-extrabold text-emerald-400 font-mono">0</span>
+                    <span class="label block mb-1.5">Hosts online</span>
+                    <span id="metric-online-machines" class="text-2xl lg:text-3xl font-disp font-bold text-rh-green font-mono">0</span>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg">
-                    <i class="fas fa-signal"></i>
-                </div>
+                <i class="fas fa-signal text-fg-dim text-lg"></i>
             </div>
 
-            <div class="bg-brand-card border border-brand-border rounded-xl p-4 flex items-center justify-between hover:border-amber-500/40 transition">
+            <div class="card p-4 flex items-center justify-between hover:border-ink-400 transition-colors">
                 <div>
-                    <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1">ANOMALIAS / ALERTAS</span>
-                    <span id="metric-total-alerts" class="text-2xl lg:text-3xl font-extrabold text-amber-400 font-mono">0</span>
+                    <span class="label block mb-1.5">Anomalias / Alertas</span>
+                    <span id="metric-total-alerts" class="text-2xl lg:text-3xl font-disp font-bold text-rh-amber font-mono">0</span>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-lg">
-                    <i class="fas fa-triangle-exclamation"></i>
-                </div>
+                <i class="fas fa-triangle-exclamation text-fg-dim text-lg"></i>
             </div>
 
-            <div class="bg-brand-card border border-brand-border rounded-xl p-4 flex items-center justify-between hover:border-purple-500/40 transition">
+            <div class="card p-4 flex items-center justify-between hover:border-ink-400 transition-colors">
                 <div>
-                    <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-1">CARGA MÉDIA CPU</span>
-                    <span id="metric-avg-cpu" class="text-2xl lg:text-3xl font-extrabold text-cyan-400 font-mono">0.0%</span>
+                    <span class="label block mb-1.5">Carga média CPU</span>
+                    <span id="metric-avg-cpu" class="text-2xl lg:text-3xl font-disp font-bold text-fg font-mono">0.0%</span>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-lg">
-                    <i class="fas fa-microchip"></i>
-                </div>
+                <i class="fas fa-microchip text-fg-dim text-lg"></i>
             </div>
         </div>
 
@@ -194,43 +157,43 @@ Auth::requireDashboard();
 
             <!-- LEFT SIDEBAR: Hosts & Live Feed (Col 4) -->
             <div class="lg:col-span-4 xl:col-span-3 space-y-4">
-                
+
                 <!-- Machines Fleet Box -->
-                <div class="bg-brand-card border border-brand-border rounded-xl p-4 flex flex-col">
+                <div class="card p-4 flex flex-col">
                     <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <i class="fas fa-network-wired text-cyan-400"></i> Frota de Hosts
+                        <h2 class="label !text-fg flex items-center gap-2">
+                            <i class="fas fa-network-wired text-fg-mid"></i> Frota de hosts
                         </h2>
-                        <span id="badge-online-count" class="text-[10px] bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-2 py-0.5 rounded-full font-bold">
+                        <span id="badge-online-count" class="text-[10px] bg-ink-600 border border-ink-400 text-fg-mid px-2 py-0.5 rounded-full font-mono font-medium">
                             0 hosts
                         </span>
                     </div>
 
                     <!-- Search Hosts Input -->
                     <div class="relative mb-3">
-                        <i class="fas fa-search absolute left-3 top-2.5 text-gray-500 text-xs"></i>
-                        <input type="text" id="filter-host-input" oninput="filterMachines(this.value)" placeholder="Filtrar por nome, IP, CPU..." class="w-full bg-brand-dark border border-brand-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-500/60 transition">
+                        <i class="fas fa-search absolute left-3 top-2.5 text-fg-dim text-xs"></i>
+                        <input type="text" id="filter-host-input" oninput="filterMachines(this.value)" placeholder="Filtrar por nome, IP, CPU..." class="w-full bg-ink-900 border border-ink-500 rounded-md pl-8 pr-3 py-1.5 text-xs text-fg placeholder-fg-dim focus:outline-none focus:border-rh-red/70 transition-colors">
                     </div>
 
                     <!-- Machine List Container -->
-                    <div id="machines-container" class="space-y-2.5 max-h-[480px] overflow-y-auto custom-scrollbar pr-1">
-                        <div class="text-center py-8 text-gray-500 text-xs">
-                            <i class="fas fa-spinner fa-spin text-lg block mb-2 text-cyan-500"></i>
+                    <div id="machines-container" class="space-y-2 max-h-[480px] overflow-y-auto custom-scrollbar pr-1">
+                        <div class="text-center py-8 text-fg-dim text-xs">
+                            <i class="fas fa-spinner fa-spin text-lg block mb-2 text-fg-mid"></i>
                             Aguardando daemons TeuPC...
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent Anomaly Events Feed -->
-                <div class="bg-brand-card border border-brand-border rounded-xl p-4">
+                <div class="card p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <i class="fas fa-bell text-amber-400"></i> Anomalias & Spikes
+                        <h2 class="label !text-fg flex items-center gap-2">
+                            <i class="fas fa-bell text-rh-amber"></i> Anomalias &amp; spikes
                         </h2>
-                        <span class="text-[10px] text-gray-500">Tempo Real</span>
+                        <span class="text-[10px] text-fg-dim font-mono">tempo real</span>
                     </div>
                     <div id="recent-events-container" class="space-y-2 max-h-[320px] overflow-y-auto custom-scrollbar text-xs">
-                        <div class="text-gray-500 text-center py-4">Nenhuma anomalia registrada.</div>
+                        <div class="text-fg-dim text-center py-4">Nenhuma anomalia registrada.</div>
                     </div>
                 </div>
 
@@ -240,107 +203,107 @@ Auth::requireDashboard();
             <div class="lg:col-span-8 xl:col-span-9 space-y-4">
 
                 <!-- Machine Hero Header -->
-                <div id="machine-hero" class="bg-brand-card border border-brand-border rounded-xl p-5 hidden">
-                    <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-brand-border">
+                <div id="machine-hero" class="card p-5 hidden">
+                    <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-ink-500">
                         <div class="space-y-1">
                             <div class="flex flex-wrap items-center gap-2.5">
-                                <h3 id="hero-hostname" class="text-xl font-black text-white tracking-wide">Carregando...</h3>
-                                <span id="hero-status-badge" class="text-[11px] px-2.5 py-0.5 rounded-full font-bold">ONLINE</span>
-                                <span id="hero-virt-badge" class="text-[11px] px-2 py-0.5 rounded bg-gray-800/80 border border-gray-700 text-gray-300 font-mono">Bare Metal</span>
-                                <span id="hero-kernel-badge" class="text-[11px] px-2 py-0.5 rounded bg-blue-950/40 border border-blue-800/40 text-blue-300 font-mono">Kernel</span>
+                                <h3 id="hero-hostname" class="font-disp text-xl font-bold text-fg tracking-tight">Carregando...</h3>
+                                <span id="hero-status-badge" class="text-[11px] px-2.5 py-0.5 rounded-full font-semibold">ONLINE</span>
+                                <span id="hero-virt-badge" class="text-[11px] px-2 py-0.5 rounded bg-ink-600 border border-ink-400 text-fg-mid font-mono">Bare Metal</span>
+                                <span id="hero-kernel-badge" class="text-[11px] px-2 py-0.5 rounded bg-ink-600 border border-ink-400 text-fg-mid font-mono">Kernel</span>
                             </div>
-                            <p id="hero-cpu-info" class="text-xs text-gray-400 font-mono">Processador: --</p>
-                            <div class="flex flex-wrap items-center gap-4 text-[11px] text-gray-400 pt-1 font-mono">
-                                <span><i class="fas fa-network-wired text-cyan-400 mr-1"></i> IP Local: <strong id="hero-ip-local" class="text-gray-200">--</strong></span>
-                                <span><i class="fas fa-globe text-purple-400 mr-1"></i> IP Público: <strong id="hero-ip-public" class="text-gray-200">--</strong></span>
-                                <span><i class="far fa-clock text-yellow-400 mr-1"></i> Último Contato: <strong id="hero-last-seen" class="text-gray-200">--</strong></span>
+                            <p id="hero-cpu-info" class="text-xs text-fg-mid font-mono">Processador: --</p>
+                            <div class="flex flex-wrap items-center gap-4 text-[11px] text-fg-mid pt-1 font-mono">
+                                <span><i class="fas fa-network-wired text-fg-dim mr-1"></i> IP local: <strong id="hero-ip-local" class="text-fg font-medium">--</strong></span>
+                                <span><i class="fas fa-globe text-fg-dim mr-1"></i> IP público: <strong id="hero-ip-public" class="text-fg font-medium">--</strong></span>
+                                <span><i class="far fa-clock text-fg-dim mr-1"></i> Último contato: <strong id="hero-last-seen" class="text-fg font-medium">--</strong></span>
                             </div>
                         </div>
 
                         <!-- Action Buttons -->
                         <div class="flex items-center gap-2">
-                            <button onclick="viewLatestSnapshot()" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs px-3.5 py-2 rounded-lg font-semibold transition flex items-center gap-2 glow-cyan">
-                                <i class="fas fa-file-code"></i> Snapshot JSON
+                            <button onclick="viewLatestSnapshot()" class="bg-ink-600 hover:bg-ink-500 text-fg border border-ink-400 text-xs px-3.5 py-2 rounded-md font-medium transition-colors flex items-center gap-2">
+                                <i class="fas fa-file-code text-fg-mid"></i> Snapshot JSON
                             </button>
                         </div>
                     </div>
 
                     <!-- Quick Vitals Gauges Row -->
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4">
-                        
+
                         <!-- CPU Usage -->
-                        <div class="bg-brand-dark/90 border border-brand-border rounded-xl p-3 text-center relative overflow-hidden">
-                            <span class="text-[10px] text-gray-400 uppercase font-semibold block">USO DE CPU</span>
-                            <span id="quick-cpu" class="text-xl lg:text-2xl font-black text-cyan-400 mt-1 block font-mono">0.0%</span>
-                            <div class="w-full bg-gray-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                                <div id="quick-cpu-bar" class="bg-cyan-400 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                        <div class="panel p-3 text-center">
+                            <span class="label block">Uso de CPU</span>
+                            <span id="quick-cpu" class="text-xl lg:text-2xl font-disp font-bold text-fg mt-1 block font-mono">0.0%</span>
+                            <div class="w-full bg-ink-600 h-1 rounded-full mt-2 overflow-hidden">
+                                <div id="quick-cpu-bar" class="bg-rh-blue h-full rounded-full transition-all duration-300" style="width: 0%"></div>
                             </div>
                         </div>
 
                         <!-- RAM Usage -->
-                        <div class="bg-brand-dark/90 border border-brand-border rounded-xl p-3 text-center relative overflow-hidden">
-                            <span class="text-[10px] text-gray-400 uppercase font-semibold block">MEMÓRIA RAM</span>
-                            <span id="quick-ram" class="text-xl lg:text-2xl font-black text-yellow-400 mt-1 block font-mono">0 / 0 GB</span>
-                            <div class="w-full bg-gray-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                                <div id="quick-ram-bar" class="bg-yellow-400 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                        <div class="panel p-3 text-center">
+                            <span class="label block">Memória RAM</span>
+                            <span id="quick-ram" class="text-xl lg:text-2xl font-disp font-bold text-fg mt-1 block font-mono">0 / 0 GB</span>
+                            <div class="w-full bg-ink-600 h-1 rounded-full mt-2 overflow-hidden">
+                                <div id="quick-ram-bar" class="bg-rh-teal h-full rounded-full transition-all duration-300" style="width: 0%"></div>
                             </div>
                         </div>
 
                         <!-- CPU Package Temperature -->
-                        <div class="bg-brand-dark/90 border border-brand-border rounded-xl p-3 text-center relative overflow-hidden">
-                            <span class="text-[10px] text-gray-400 uppercase font-semibold block">TEMP. PACOTE CPU</span>
-                            <span id="quick-temp" class="text-xl lg:text-2xl font-black text-red-400 mt-1 block font-mono">-- °C</span>
-                            <div class="w-full bg-gray-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                                <div id="quick-temp-bar" class="bg-red-400 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                        <div class="panel p-3 text-center">
+                            <span class="label block">Temp. pacote CPU</span>
+                            <span id="quick-temp" class="text-xl lg:text-2xl font-disp font-bold text-fg mt-1 block font-mono">-- °C</span>
+                            <div class="w-full bg-ink-600 h-1 rounded-full mt-2 overflow-hidden">
+                                <div id="quick-temp-bar" class="bg-rh-amber h-full rounded-full transition-all duration-300" style="width: 0%"></div>
                             </div>
                         </div>
 
                         <!-- RAPL Watts -->
-                        <div class="bg-brand-dark/90 border border-brand-border rounded-xl p-3 text-center relative overflow-hidden">
-                            <span class="text-[10px] text-gray-400 uppercase font-semibold block">CONSUMO RAPL</span>
-                            <span id="quick-rapl" class="text-xl lg:text-2xl font-black text-emerald-400 mt-1 block font-mono">-- W</span>
-                            <span id="quick-rapl-sub" class="text-[10px] text-gray-500 block mt-1">Package Power</span>
+                        <div class="panel p-3 text-center">
+                            <span class="label block">Consumo RAPL</span>
+                            <span id="quick-rapl" class="text-xl lg:text-2xl font-disp font-bold text-fg mt-1 block font-mono">-- W</span>
+                            <span id="quick-rapl-sub" class="text-[10px] text-fg-dim block mt-1">Package Power</span>
                         </div>
 
                         <!-- Load 1m -->
-                        <div class="bg-brand-dark/90 border border-brand-border rounded-xl p-3 text-center relative overflow-hidden">
-                            <span class="text-[10px] text-gray-400 uppercase font-semibold block">LOAD AVERAGE</span>
-                            <span id="quick-load" class="text-xl lg:text-2xl font-black text-purple-400 mt-1 block font-mono">0.00</span>
-                            <span id="quick-cores-sub" class="text-[10px] text-gray-500 block mt-1">1m Load</span>
+                        <div class="panel p-3 text-center">
+                            <span class="label block">Load average</span>
+                            <span id="quick-load" class="text-xl lg:text-2xl font-disp font-bold text-fg mt-1 block font-mono">0.00</span>
+                            <span id="quick-cores-sub" class="text-[10px] text-fg-dim block mt-1">1m Load</span>
                         </div>
 
                     </div>
                 </div>
 
                 <!-- Navigation Tabs Row -->
-                <div id="tabs-container" class="flex flex-wrap items-center gap-2 border-b border-brand-border pb-1 hidden">
-                    <button onclick="switchTab('charts')" id="tab-btn-charts" class="tab-btn px-4 py-2 rounded-t-lg font-bold text-xs transition border-b-2 border-cyan-400 text-cyan-300 bg-brand-card flex items-center gap-2">
-                        <i class="fas fa-chart-line"></i> Gráficos em Tempo Real
+                <div id="tabs-container" class="flex flex-wrap items-center gap-1.5 border-b border-ink-500 pb-px hidden">
+                    <button onclick="switchTab('charts')" id="tab-btn-charts" class="tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-active flex items-center gap-2">
+                        <i class="fas fa-chart-line"></i> Gráficos em tempo real
                     </button>
-                    <button onclick="switchTab('processes')" id="tab-btn-processes" class="tab-btn px-4 py-2 rounded-t-lg font-bold text-xs transition border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-brand-card/50 flex items-center gap-2">
-                        <i class="fas fa-tasks"></i> Top Processos & I/O
+                    <button onclick="switchTab('processes')" id="tab-btn-processes" class="tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-idle flex items-center gap-2">
+                        <i class="fas fa-tasks"></i> Top processos &amp; I/O
                     </button>
-                    <button onclick="switchTab('disks')" id="tab-btn-disks" class="tab-btn px-4 py-2 rounded-t-lg font-bold text-xs transition border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-brand-card/50 flex items-center gap-2">
+                    <button onclick="switchTab('disks')" id="tab-btn-disks" class="tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-idle flex items-center gap-2">
                         <i class="fas fa-hard-drive"></i> Armazenamento
                     </button>
-                    <button onclick="switchTab('sensors')" id="tab-btn-sensors" class="tab-btn px-4 py-2 rounded-t-lg font-bold text-xs transition border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-brand-card/50 flex items-center gap-2">
-                        <i class="fas fa-thermometer-half"></i> Sensores & Baterias
+                    <button onclick="switchTab('sensors')" id="tab-btn-sensors" class="tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-idle flex items-center gap-2">
+                        <i class="fas fa-thermometer-half"></i> Sensores &amp; baterias
                     </button>
-                    <button onclick="switchTab('hardware')" id="tab-btn-hardware" class="tab-btn px-4 py-2 rounded-t-lg font-bold text-xs transition border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-brand-card/50 flex items-center gap-2">
-                        <i class="fas fa-shield-halved"></i> Hardware & Firmware
+                    <button onclick="switchTab('hardware')" id="tab-btn-hardware" class="tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-idle flex items-center gap-2">
+                        <i class="fas fa-shield-halved"></i> Hardware &amp; firmware
                     </button>
                 </div>
 
                 <!-- TAB 1: Real-time Charts View -->
                 <div id="tab-pane-charts" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
-                    
+
                     <!-- CPU Chart -->
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-4">
+                    <div class="card p-4">
                         <div class="flex items-center justify-between mb-3">
-                            <h4 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
-                                <i class="fas fa-microchip text-cyan-400"></i> Histórico Carga de CPU (%)
+                            <h4 class="label !text-fg-mid flex items-center gap-2">
+                                <i class="fas fa-microchip"></i> Histórico carga de CPU (%)
                             </h4>
-                            <span id="chart-cpu-val" class="text-xs font-mono font-bold text-cyan-400">0.0%</span>
+                            <span id="chart-cpu-val" class="text-xs font-mono font-medium text-fg">0.0%</span>
                         </div>
                         <div class="h-56">
                             <canvas id="chart-cpu"></canvas>
@@ -348,12 +311,12 @@ Auth::requireDashboard();
                     </div>
 
                     <!-- RAM Chart -->
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-4">
+                    <div class="card p-4">
                         <div class="flex items-center justify-between mb-3">
-                            <h4 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
-                                <i class="fas fa-memory text-yellow-400"></i> Histórico Consumo de RAM (GB)
+                            <h4 class="label !text-fg-mid flex items-center gap-2">
+                                <i class="fas fa-memory"></i> Histórico consumo de RAM (GB)
                             </h4>
-                            <span id="chart-ram-val" class="text-xs font-mono font-bold text-yellow-400">0.0 GB</span>
+                            <span id="chart-ram-val" class="text-xs font-mono font-medium text-fg">0.0 GB</span>
                         </div>
                         <div class="h-56">
                             <canvas id="chart-ram"></canvas>
@@ -361,10 +324,10 @@ Auth::requireDashboard();
                     </div>
 
                     <!-- Disk I/O Chart -->
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-4">
+                    <div class="card p-4">
                         <div class="flex items-center justify-between mb-3">
-                            <h4 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
-                                <i class="fas fa-hard-drive text-emerald-400"></i> I/O de Disco (Read / Write KB/s)
+                            <h4 class="label !text-fg-mid flex items-center gap-2">
+                                <i class="fas fa-hard-drive"></i> I/O de disco (Read / Write KB/s)
                             </h4>
                         </div>
                         <div class="h-56">
@@ -373,10 +336,10 @@ Auth::requireDashboard();
                     </div>
 
                     <!-- Network Traffic Chart -->
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-4">
+                    <div class="card p-4">
                         <div class="flex items-center justify-between mb-3">
-                            <h4 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
-                                <i class="fas fa-network-wired text-blue-400"></i> Tráfego de Rede (RX / TX KB/s)
+                            <h4 class="label !text-fg-mid flex items-center gap-2">
+                                <i class="fas fa-network-wired"></i> Tráfego de rede (RX / TX KB/s)
                             </h4>
                         </div>
                         <div class="h-56">
@@ -387,31 +350,31 @@ Auth::requireDashboard();
                 </div>
 
                 <!-- TAB 2: Processes Table View -->
-                <div id="tab-pane-processes" class="bg-brand-card border border-brand-border rounded-xl p-4 space-y-3 hidden">
+                <div id="tab-pane-processes" class="card p-4 space-y-3 hidden">
                     <div class="flex flex-wrap items-center justify-between gap-3">
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <i class="fas fa-tasks text-cyan-400"></i> Top Processos Ativos no Host
+                        <h4 class="label !text-fg flex items-center gap-2">
+                            <i class="fas fa-tasks"></i> Top processos ativos no host
                         </h4>
-                        <input type="text" id="filter-proc-input" oninput="filterProcesses(this.value)" placeholder="Filtrar por PID, Nome ou Usuário..." class="bg-brand-dark border border-brand-border rounded-lg px-3 py-1.5 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cyan-500/60 w-64">
+                        <input type="text" id="filter-proc-input" oninput="filterProcesses(this.value)" placeholder="Filtrar por PID, nome ou usuário..." class="bg-ink-900 border border-ink-500 rounded-md px-3 py-1.5 text-xs text-fg placeholder-fg-dim focus:outline-none focus:border-rh-red/70 w-64 transition-colors">
                     </div>
 
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full text-left text-xs font-mono">
-                            <thead class="bg-brand-dark text-gray-400 border-b border-brand-border">
+                            <thead class="bg-ink-900 text-fg-dim border-b border-ink-500">
                                 <tr>
-                                    <th class="p-2.5">PID</th>
-                                    <th class="p-2.5">Nome</th>
-                                    <th class="p-2.5">Usuário</th>
-                                    <th class="p-2.5">CPU %</th>
-                                    <th class="p-2.5">Memória</th>
-                                    <th class="p-2.5">Disk Read</th>
-                                    <th class="p-2.5">Disk Write</th>
-                                    <th class="p-2.5">Threads</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">PID</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Nome</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Usuário</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">CPU %</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Memória</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Disk Read</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Disk Write</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Threads</th>
                                 </tr>
                             </thead>
-                            <tbody id="processes-table-body" class="divide-y divide-brand-border/40">
+                            <tbody id="processes-table-body" class="divide-y divide-ink-500/60">
                                 <tr>
-                                    <td colspan="8" class="p-4 text-center text-gray-500">Carregando processos...</td>
+                                    <td colspan="8" class="p-4 text-center text-fg-dim">Carregando processos...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -420,71 +383,71 @@ Auth::requireDashboard();
 
                 <!-- TAB 3: Disks & Storage View -->
                 <div id="tab-pane-disks" class="space-y-4 hidden">
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-4">
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <i class="fas fa-hard-drive text-emerald-400"></i> Unidades de Disco & Agendadores I/O
+                    <div class="card p-4">
+                        <h4 class="label !text-fg mb-4 flex items-center gap-2">
+                            <i class="fas fa-hard-drive"></i> Unidades de disco &amp; agendadores I/O
                         </h4>
                         <div id="disks-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="text-gray-500 text-center py-6 col-span-2">Nenhum disco reportado na telemetria recente.</div>
+                            <div class="text-fg-dim text-center py-6 col-span-2 text-xs">Nenhum disco reportado na telemetria recente.</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- TAB 4: Sensors & Power View -->
                 <div id="tab-pane-sensors" class="space-y-4 hidden">
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-4">
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <i class="fas fa-thermometer-half text-red-400"></i> Sensores Térmicos, Voltagens & Coolers
+                    <div class="card p-4">
+                        <h4 class="label !text-fg mb-3 flex items-center gap-2">
+                            <i class="fas fa-thermometer-half"></i> Sensores térmicos, voltagens &amp; coolers
                         </h4>
                         <div id="sensors-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                            <div class="text-gray-500 text-center py-6 col-span-4">Nenhum sensor reportado.</div>
+                            <div class="text-fg-dim text-center py-6 col-span-4 text-xs">Nenhum sensor reportado.</div>
                         </div>
                     </div>
 
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-4">
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <i class="fas fa-battery-half text-yellow-400"></i> Baterias & Fontes AC
+                    <div class="card p-4">
+                        <h4 class="label !text-fg mb-3 flex items-center gap-2">
+                            <i class="fas fa-battery-half"></i> Baterias &amp; fontes AC
                         </h4>
                         <div id="batteries-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div class="text-gray-500 text-center py-4 col-span-2">Nenhuma bateria conectada.</div>
+                            <div class="text-fg-dim text-center py-4 col-span-2 text-xs">Nenhuma bateria conectada.</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- TAB 5: Hardware & Firmware View -->
                 <div id="tab-pane-hardware" class="space-y-4 hidden">
-                    <div class="bg-brand-card border border-brand-border rounded-xl p-4">
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <i class="fas fa-shield-halved text-cyan-400"></i> Detalhes de Plataforma & Segurança
+                    <div class="card p-4">
+                        <h4 class="label !text-fg mb-4 flex items-center gap-2">
+                            <i class="fas fa-shield-halved"></i> Detalhes de plataforma &amp; segurança
                         </h4>
                         <div id="hardware-meta-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-                            <div class="bg-brand-dark p-3.5 rounded-lg border border-brand-border space-y-2">
-                                <div class="text-gray-400 font-semibold border-b border-brand-border pb-1">SISTEMA OPERACIONAL</div>
-                                <div class="flex justify-between"><span class="text-gray-400">OS:</span><span id="hw-os" class="text-white">--</span></div>
-                                <div class="flex justify-between"><span class="text-gray-400">Kernel:</span><span id="hw-kernel" class="text-cyan-400">--</span></div>
-                                <div class="flex justify-between"><span class="text-gray-400">Virtualização:</span><span id="hw-virt" class="text-yellow-400">--</span></div>
+                            <div class="panel p-3.5 space-y-2">
+                                <div class="label !text-fg-mid border-b border-ink-500 pb-1.5">Sistema operacional</div>
+                                <div class="flex justify-between"><span class="text-fg-dim">OS:</span><span id="hw-os" class="text-fg">--</span></div>
+                                <div class="flex justify-between"><span class="text-fg-dim">Kernel:</span><span id="hw-kernel" class="text-rh-blue">--</span></div>
+                                <div class="flex justify-between"><span class="text-fg-dim">Virtualização:</span><span id="hw-virt" class="text-rh-amber">--</span></div>
                             </div>
-                            <div class="bg-brand-dark p-3.5 rounded-lg border border-brand-border space-y-2">
-                                <div class="text-gray-400 font-semibold border-b border-brand-border pb-1">PROCESSADOR & ARQUITETURA</div>
-                                <div class="flex justify-between"><span class="text-gray-400">Modelo:</span><span id="hw-cpu-brand" class="text-white truncate max-w-[220px]">--</span></div>
-                                <div class="flex justify-between"><span class="text-gray-400">Cores / Threads:</span><span id="hw-cpu-cores" class="text-cyan-400">--</span></div>
-                                <div class="flex justify-between"><span class="text-gray-400">Memória Física:</span><span id="hw-mem-total" class="text-emerald-400">--</span></div>
+                            <div class="panel p-3.5 space-y-2">
+                                <div class="label !text-fg-mid border-b border-ink-500 pb-1.5">Processador &amp; arquitetura</div>
+                                <div class="flex justify-between"><span class="text-fg-dim">Modelo:</span><span id="hw-cpu-brand" class="text-fg truncate max-w-[220px]">--</span></div>
+                                <div class="flex justify-between"><span class="text-fg-dim">Cores / Threads:</span><span id="hw-cpu-cores" class="text-rh-blue">--</span></div>
+                                <div class="flex justify-between"><span class="text-fg-dim">Memória física:</span><span id="hw-mem-total" class="text-rh-green">--</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Empty State View -->
-                <div id="empty-state" class="bg-brand-card border border-dashed border-brand-border rounded-xl p-16 text-center">
-                    <div class="w-16 h-16 rounded-full bg-brand-border/50 flex items-center justify-center mx-auto mb-4 text-cyan-400 text-2xl glow-cyan">
+                <div id="empty-state" class="card border-dashed p-16 text-center">
+                    <div class="w-14 h-14 rounded-full bg-ink-600 border border-ink-400 flex items-center justify-center mx-auto mb-4 text-fg-mid text-xl">
                         <i class="fas fa-satellite-dish"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Nenhuma Máquina Selecionada</h3>
-                    <p class="text-gray-400 text-xs max-w-md mx-auto mb-6">
+                    <h3 class="font-disp text-lg font-bold text-fg mb-2">Nenhuma máquina selecionada</h3>
+                    <p class="text-fg-mid text-xs max-w-md mx-auto mb-6">
                         Inicie o agente daemon em seus servidores para começar a receber telemetria contínua e alertas em tempo real.
                     </p>
-                    <div class="inline-block bg-brand-dark px-4 py-2.5 rounded-lg border border-brand-border text-left font-mono text-xs text-gray-300">
-                        <span class="text-cyan-400"># Iniciar TeuPC Daemon:</span><br>
+                    <div class="inline-block bg-ink-900 px-4 py-2.5 rounded-md border border-ink-500 text-left font-mono text-xs text-fg-mid">
+                        <span class="text-rh-red"># Iniciar TeuPC Daemon:</span><br>
                         ./target/release/teupc --daemon --config teupc_agent.json
                     </div>
                 </div>
@@ -494,23 +457,23 @@ Auth::requireDashboard();
     </main>
 
     <!-- Snapshot JSON Viewer Modal -->
-    <div id="snapshot-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-brand-card border border-brand-border rounded-2xl max-w-5xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div class="p-4 bg-brand-dark border-b border-brand-border flex items-center justify-between">
+    <div id="snapshot-modal" class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-ink-700 border border-ink-400 rounded-lg max-w-5xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-4 bg-ink-800 border-b border-ink-500 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <i class="fas fa-code text-cyan-400 text-sm"></i>
-                    <h3 class="font-bold text-white text-xs uppercase tracking-wider">Snapshot Técnico JSON Completo</h3>
+                    <i class="fas fa-code text-rh-red text-sm"></i>
+                    <h3 class="font-semibold text-fg text-xs uppercase tracking-wider">Snapshot técnico JSON completo</h3>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="downloadSnapshotJson()" class="bg-brand-border hover:bg-gray-700 text-gray-200 text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 font-semibold">
-                        <i class="fas fa-download text-cyan-400"></i> Baixar .JSON
+                    <button onclick="downloadSnapshotJson()" class="bg-ink-600 hover:bg-ink-500 border border-ink-400 text-fg-mid hover:text-fg text-xs px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 font-medium">
+                        <i class="fas fa-download"></i> Baixar .JSON
                     </button>
-                    <button onclick="closeSnapshotModal()" class="text-gray-400 hover:text-white p-1 text-lg">
+                    <button onclick="closeSnapshotModal()" class="text-fg-dim hover:text-fg p-1 text-lg">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
             </div>
-            <div class="p-4 overflow-y-auto custom-scrollbar flex-1 bg-brand-dark/95 font-mono text-xs text-emerald-400 selection:bg-emerald-950">
+            <div class="p-4 overflow-y-auto custom-scrollbar flex-1 bg-ink-900 font-mono text-xs text-rh-teal selection:bg-ink-600">
                 <pre id="snapshot-json-content">Carregando snapshot...</pre>
             </div>
         </div>
@@ -538,6 +501,21 @@ Auth::requireDashboard();
         let chartCpu = null, chartRam = null, chartDisk = null, chartNet = null;
 
         function initCharts() {
+            const GRID = '#262626';
+            const TICK = '#8a8a8a';
+            const FONT = { family: '"Red Hat Mono", monospace', size: 10 };
+            const TOOLTIP = {
+                backgroundColor: '#262626',
+                borderColor: '#3f3f3f',
+                borderWidth: 1,
+                titleColor: '#f2f2f2',
+                bodyColor: '#a1a1a1',
+                titleFont: { family: '"Red Hat Mono", monospace', size: 11 },
+                bodyFont: { family: '"Red Hat Mono", monospace', size: 11 },
+                padding: 8,
+                cornerRadius: 4,
+            };
+
             const baseConfig = (label, color, fill = true) => ({
                 type: 'line',
                 data: {
@@ -546,12 +524,12 @@ Auth::requireDashboard();
                         label: label,
                         data: [],
                         borderColor: color,
-                        backgroundColor: fill ? color + '18' : 'transparent',
+                        backgroundColor: fill ? color + '14' : 'transparent',
                         fill: fill,
-                        tension: 0.35,
-                        borderWidth: 2,
+                        tension: 0.3,
+                        borderWidth: 1.5,
                         pointRadius: 0,
-                        pointHoverRadius: 4,
+                        pointHoverRadius: 3,
                     }]
                 },
                 options: {
@@ -560,31 +538,24 @@ Auth::requireDashboard();
                     animation: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#0e1420',
-                            borderColor: '#1b263b',
-                            borderWidth: 1,
-                            titleColor: '#e2e8f0',
-                            bodyColor: color,
-                            titleFont: { family: 'JetBrains Mono', size: 11 },
-                            bodyFont: { family: 'JetBrains Mono', size: 11 }
-                        }
+                        tooltip: TOOLTIP
                     },
                     scales: {
                         x: { display: false },
                         y: {
-                            grid: { color: '#161f30' },
-                            ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } }
+                            grid: { color: GRID },
+                            border: { display: false },
+                            ticks: { color: TICK, font: FONT }
                         }
                     }
                 }
             });
 
             const ctxCpu = document.getElementById('chart-cpu').getContext('2d');
-            chartCpu = new Chart(ctxCpu, baseConfig('CPU %', '#00f0ff'));
+            chartCpu = new Chart(ctxCpu, baseConfig('CPU %', '#0088CE'));
 
             const ctxRam = document.getElementById('chart-ram').getContext('2d');
-            chartRam = new Chart(ctxRam, baseConfig('RAM (GB)', '#ffb700'));
+            chartRam = new Chart(ctxRam, baseConfig('RAM (GB)', '#00B8AF'));
 
             const ctxDisk = document.getElementById('chart-disk').getContext('2d');
             chartDisk = new Chart(ctxDisk, {
@@ -592,8 +563,8 @@ Auth::requireDashboard();
                 data: {
                     labels: [],
                     datasets: [
-                        { label: 'Read KB/s', data: [], borderColor: '#00ff66', backgroundColor: '#00ff6615', fill: true, borderWidth: 2, tension: 0.35, pointRadius: 0 },
-                        { label: 'Write KB/s', data: [], borderColor: '#ffb700', backgroundColor: '#ffb70015', fill: true, borderWidth: 2, tension: 0.35, pointRadius: 0 }
+                        { label: 'Read KB/s', data: [], borderColor: '#4CA64C', backgroundColor: '#4CA64C14', fill: true, borderWidth: 1.5, tension: 0.3, pointRadius: 0 },
+                        { label: 'Write KB/s', data: [], borderColor: '#F0AB00', backgroundColor: '#F0AB0014', fill: true, borderWidth: 1.5, tension: 0.3, pointRadius: 0 }
                     ]
                 },
                 options: {
@@ -601,12 +572,12 @@ Auth::requireDashboard();
                     maintainAspectRatio: false,
                     animation: false,
                     plugins: {
-                        legend: { display: true, labels: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } } },
-                        tooltip: { backgroundColor: '#0e1420', borderColor: '#1b263b', borderWidth: 1 }
+                        legend: { display: true, labels: { color: '#a1a1a1', boxWidth: 12, boxHeight: 2, font: FONT } },
+                        tooltip: TOOLTIP
                     },
                     scales: {
                         x: { display: false },
-                        y: { grid: { color: '#161f30' }, ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } } }
+                        y: { grid: { color: GRID }, border: { display: false }, ticks: { color: TICK, font: FONT } }
                     }
                 }
             });
@@ -617,8 +588,8 @@ Auth::requireDashboard();
                 data: {
                     labels: [],
                     datasets: [
-                        { label: 'RX (Download) KB/s', data: [], borderColor: '#3b82f6', backgroundColor: '#3b82f615', fill: true, borderWidth: 2, tension: 0.35, pointRadius: 0 },
-                        { label: 'TX (Upload) KB/s', data: [], borderColor: '#a855f7', backgroundColor: '#a855f715', fill: true, borderWidth: 2, tension: 0.35, pointRadius: 0 }
+                        { label: 'RX (Download) KB/s', data: [], borderColor: '#0088CE', backgroundColor: '#0088CE14', fill: true, borderWidth: 1.5, tension: 0.3, pointRadius: 0 },
+                        { label: 'TX (Upload) KB/s', data: [], borderColor: '#EE0000', backgroundColor: '#EE000012', fill: true, borderWidth: 1.5, tension: 0.3, pointRadius: 0 }
                     ]
                 },
                 options: {
@@ -626,12 +597,12 @@ Auth::requireDashboard();
                     maintainAspectRatio: false,
                     animation: false,
                     plugins: {
-                        legend: { display: true, labels: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } } },
-                        tooltip: { backgroundColor: '#0e1420', borderColor: '#1b263b', borderWidth: 1 }
+                        legend: { display: true, labels: { color: '#a1a1a1', boxWidth: 12, boxHeight: 2, font: FONT } },
+                        tooltip: TOOLTIP
                     },
                     scales: {
                         x: { display: false },
-                        y: { grid: { color: '#161f30' }, ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } } }
+                        y: { grid: { color: GRID }, border: { display: false }, ticks: { color: TICK, font: FONT } }
                     }
                 }
             });
@@ -670,11 +641,11 @@ Auth::requireDashboard();
                 }
 
                 document.getElementById('server-status').innerText = 'Conectado';
-                document.getElementById('status-pulse-dot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+                document.getElementById('status-pulse-dot').className = 'w-2 h-2 rounded-full bg-rh-green pulse';
             } catch (err) {
                 console.error("Erro ao buscar dados do servidor:", err);
                 document.getElementById('server-status').innerText = 'Erro';
-                document.getElementById('status-pulse-dot').className = 'w-2.5 h-2.5 rounded-full bg-red-500';
+                document.getElementById('status-pulse-dot').className = 'w-2 h-2 rounded-full bg-rh-red';
             }
         }
 
@@ -684,7 +655,7 @@ Auth::requireDashboard();
                 renderMachineList(allMachines);
                 return;
             }
-            const filtered = allMachines.filter(m => 
+            const filtered = allMachines.filter(m =>
                 (m.hostname && m.hostname.toLowerCase().includes(q)) ||
                 (m.cpu_brand && m.cpu_brand.toLowerCase().includes(q)) ||
                 (m.ip_local && m.ip_local.includes(q)) ||
@@ -697,44 +668,44 @@ Auth::requireDashboard();
             const container = document.getElementById('machines-container');
             if (machines.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-8 text-gray-500 text-xs">
-                        <i class="fas fa-satellite-dish text-lg block mb-2 text-cyan-500"></i>
-                        Nenhuma máquina conectada.<br>Inicie o daemon: <code class="text-cyan-400 text-[11px]">./teupc --daemon</code>
+                    <div class="text-center py-8 text-fg-dim text-xs">
+                        <i class="fas fa-satellite-dish text-lg block mb-2 text-fg-mid"></i>
+                        Nenhuma máquina conectada.<br>Inicie o daemon: <code class="text-rh-red text-[11px]">./teupc --daemon</code>
                     </div>`;
                 return;
             }
 
             container.innerHTML = machines.map(m => {
                 const isSelected = m.machine_id === selectedMachineId;
-                const statusColor = m.is_online ? 'bg-emerald-400 shadow-[0_0_8px_rgba(0,255,102,0.6)]' : 'bg-gray-600';
-                const statusBorder = m.is_online ? 'border-emerald-500/30 text-emerald-300' : 'border-gray-700 text-gray-400';
+                const statusDot = m.is_online ? 'bg-rh-green' : 'bg-ink-400';
+                const statusBorder = m.is_online ? 'border-rh-green/40 text-rh-green' : 'border-ink-400 text-fg-dim';
                 const statusText = m.is_online ? 'ONLINE' : 'OFFLINE';
-                const activeClass = isSelected ? 'border-cyan-500 bg-cyan-950/20 glow-cyan ring-1 ring-cyan-500/50' : 'border-brand-border bg-brand-dark/70 hover:border-gray-700 hover:bg-brand-card';
+                const activeClass = isSelected ? 'border-rh-red bg-[#262626] ring-1 ring-rh-red/60' : 'border-ink-500 bg-ink-900/70 hover:border-ink-400 hover:bg-ink-700';
 
                 const cpu = m.telemetry ? `${m.telemetry.cpu_usage.toFixed(1)}%` : '--';
                 const ram = m.telemetry ? `${(m.telemetry.mem_used / 1073741824).toFixed(1)} GB` : '--';
                 const cpuVal = m.telemetry ? m.telemetry.cpu_usage : 0;
 
                 return `
-                    <div data-machine-id="${esc(m.machine_id)}" class="machine-card cursor-pointer border rounded-xl p-3 transition ${activeClass}">
+                    <div data-machine-id="${esc(m.machine_id)}" class="machine-card cursor-pointer border rounded-lg p-3 transition-colors ${activeClass}">
                         <div class="flex items-center justify-between mb-1.5">
                             <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full ${statusColor}"></span>
-                                <span class="font-bold text-white text-xs truncate max-w-[140px]">${esc(m.hostname)}</span>
+                                <span class="w-2 h-2 rounded-full ${statusDot}"></span>
+                                <span class="font-semibold text-fg text-xs truncate max-w-[140px]">${esc(m.hostname)}</span>
                             </div>
-                            <span class="text-[9px] px-1.5 py-0.5 rounded border ${statusBorder} font-bold">${statusText}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded border ${statusBorder} font-mono font-medium">${statusText}</span>
                         </div>
-                        <div class="text-[10px] text-gray-400 truncate mb-2 font-mono">${esc(m.cpu_brand || m.os)}</div>
-                        
+                        <div class="text-[10px] text-fg-dim truncate mb-2 font-mono">${esc(m.cpu_brand || m.os)}</div>
+
                         <!-- CPU Usage mini bar -->
-                        <div class="w-full bg-gray-800/80 h-1 rounded-full mb-2 overflow-hidden">
-                            <div class="bg-cyan-400 h-full rounded-full" style="width: ${Math.min(cpuVal, 100)}%"></div>
+                        <div class="w-full bg-ink-600 h-1 rounded-full mb-2 overflow-hidden">
+                            <div class="bg-rh-blue h-full rounded-full" style="width: ${Math.min(cpuVal, 100)}%"></div>
                         </div>
 
-                        <div class="flex items-center justify-between text-[10px] text-gray-400 border-t border-brand-border/60 pt-1.5 font-mono">
-                            <span>CPU: <strong class="text-cyan-400">${cpu}</strong></span>
-                            <span>RAM: <strong class="text-yellow-400">${ram}</strong></span>
-                            <span>IP: <strong class="text-gray-300">${esc(m.ip_local || m.ip_public || '-')}</strong></span>
+                        <div class="flex items-center justify-between text-[10px] text-fg-dim border-t border-ink-500/70 pt-1.5 font-mono">
+                            <span>CPU: <strong class="text-fg font-medium">${cpu}</strong></span>
+                            <span>RAM: <strong class="text-fg font-medium">${ram}</strong></span>
+                            <span>IP: <strong class="text-fg-mid">${esc(m.ip_local || m.ip_public || '-')}</strong></span>
                         </div>
                     </div>
                 `;
@@ -744,34 +715,34 @@ Auth::requireDashboard();
         function renderRecentEvents(events) {
             const container = document.getElementById('recent-events-container');
             if (!events || events.length === 0) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-4">Nenhuma anomalia registrada.</div>';
+                container.innerHTML = '<div class="text-fg-dim text-center py-4">Nenhuma anomalia registrada.</div>';
                 return;
             }
 
             document.getElementById('metric-total-alerts').innerText = events.length;
 
             container.innerHTML = events.map(e => {
-                let badgeClass = 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+                let badgeClass = 'text-rh-blue border-rh-blue/40 bg-rh-blue/10';
                 let icon = 'fa-info-circle';
                 if (e.severity === 'Critical') {
-                    badgeClass = 'text-red-400 bg-red-500/10 border-red-500/20';
+                    badgeClass = 'text-rh-red border-rh-red/40 bg-rh-red/10';
                     icon = 'fa-triangle-exclamation';
                 } else if (e.severity === 'Warning') {
-                    badgeClass = 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+                    badgeClass = 'text-rh-amber border-rh-amber/40 bg-rh-amber/10';
                     icon = 'fa-triangle-exclamation';
                 }
 
                 const time = e.created_at.split(' ')[1];
                 return `
-                    <div class="border border-brand-border rounded-lg p-2.5 bg-brand-dark/60 hover:border-gray-700 transition">
+                    <div class="border border-ink-500 rounded-md p-2.5 bg-ink-900/60 hover:border-ink-400 transition-colors">
                         <div class="flex items-center justify-between mb-1">
-                            <span class="text-[9px] px-1.5 py-0.5 rounded border font-bold ${badgeClass}">
+                            <span class="text-[9px] px-1.5 py-0.5 rounded border font-mono font-medium ${badgeClass}">
                                 <i class="fas ${icon} mr-1"></i>${esc(e.category)}
                             </span>
-                            <span class="text-[10px] text-gray-500 font-mono">${time}</span>
+                            <span class="text-[10px] text-fg-dim font-mono">${time}</span>
                         </div>
-                        <div class="font-bold text-gray-200 text-[11px] truncate">${esc(e.title)}</div>
-                        <div class="text-[10px] text-gray-400 truncate mt-0.5 font-mono">${esc(e.details)}</div>
+                        <div class="font-semibold text-fg text-[11px] truncate">${esc(e.title)}</div>
+                        <div class="text-[10px] text-fg-dim truncate mt-0.5 font-mono">${esc(e.details)}</div>
                     </div>
                 `;
             }).join('');
@@ -782,10 +753,10 @@ Auth::requireDashboard();
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('machine-hero').classList.remove('hidden');
             document.getElementById('tabs-container').classList.remove('hidden');
-            
+
             // Switch to current active tab
             switchTab(currentTab);
-            
+
             fetchMachineDetails(machineId);
             renderMachineList(allMachines);
         }
@@ -793,15 +764,15 @@ Auth::requireDashboard();
         function switchTab(tabId) {
             currentTab = tabId;
             const tabs = ['charts', 'processes', 'disks', 'sensors', 'hardware'];
-            
+
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-btn-${t}`);
                 const pane = document.getElementById(`tab-pane-${t}`);
                 if (t === tabId) {
-                    btn.className = 'tab-btn px-4 py-2 rounded-t-lg font-bold text-xs transition border-b-2 border-cyan-400 text-cyan-300 bg-brand-card flex items-center gap-2';
+                    btn.className = 'tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-active flex items-center gap-2';
                     pane.classList.remove('hidden');
                 } else {
-                    btn.className = 'tab-btn px-4 py-2 rounded-t-lg font-bold text-xs transition border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-brand-card/50 flex items-center gap-2';
+                    btn.className = 'tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-idle flex items-center gap-2';
                     pane.classList.add('hidden');
                 }
             });
@@ -826,10 +797,10 @@ Auth::requireDashboard();
                 const badge = document.getElementById('hero-status-badge');
                 if (m.is_online) {
                     badge.innerText = 'ONLINE';
-                    badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                    badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-rh-green/15 text-rh-green border border-rh-green/40';
                 } else {
                     badge.innerText = 'OFFLINE';
-                    badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-gray-700 text-gray-400 border border-gray-600';
+                    badge.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-ink-600 text-fg-dim border border-ink-400';
                 }
 
                 // Update Quick Gauges
@@ -851,7 +822,7 @@ Auth::requireDashboard();
                         const tempPct = Math.min((l.cpu_temp / 100) * 100, 100);
                         document.getElementById('quick-temp-bar').style.width = `${tempPct}%`;
                         if (l.cpu_temp > 80) {
-                            document.getElementById('quick-temp').className = 'text-xl lg:text-2xl font-black text-red-500 mt-1 block font-mono';
+                            document.getElementById('quick-temp').className = 'text-xl lg:text-2xl font-disp font-bold text-rh-red mt-1 block font-mono';
                         }
                     }
 
@@ -862,7 +833,7 @@ Auth::requireDashboard();
                 // Update Charts
                 if (data.history && data.history.length > 0) {
                     const labels = data.history.map(h => h.created_at.split(' ')[1]);
-                    
+
                     chartCpu.data.labels = labels;
                     chartCpu.data.datasets[0].data = data.history.map(h => h.cpu_usage);
                     chartCpu.update('none');
@@ -919,7 +890,7 @@ Auth::requireDashboard();
                 renderProcessesTable(currentMachineDetails.top_processes);
                 return;
             }
-            const filtered = currentMachineDetails.top_processes.filter(p => 
+            const filtered = currentMachineDetails.top_processes.filter(p =>
                 p.pid.toString().includes(q) ||
                 p.name.toLowerCase().includes(q) ||
                 p.user.toLowerCase().includes(q)
@@ -930,23 +901,23 @@ Auth::requireDashboard();
         function renderProcessesTable(procs) {
             const tbody = document.getElementById('processes-table-body');
             if (!procs || procs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Nenhum processo reportado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-fg-dim">Nenhum processo reportado.</td></tr>';
                 return;
             }
 
             tbody.innerHTML = procs.map(p => {
                 const memMb = (p.mem_bytes / (1024 * 1024)).toFixed(1);
-                const cpuClass = p.cpu_usage > 50 ? 'text-red-400 font-bold' : (p.cpu_usage > 10 ? 'text-yellow-400' : 'text-gray-300');
+                const cpuClass = p.cpu_usage > 50 ? 'text-rh-red font-semibold' : (p.cpu_usage > 10 ? 'text-rh-amber' : 'text-fg-mid');
                 return `
-                    <tr class="hover:bg-brand-dark/70 transition">
-                        <td class="p-2.5 text-gray-400">${p.pid}</td>
-                        <td class="p-2.5 font-bold text-white">${esc(p.name)}</td>
-                        <td class="p-2.5 text-gray-400">${esc(p.user)}</td>
+                    <tr class="hover:bg-ink-800/70 transition-colors">
+                        <td class="p-2.5 text-fg-dim">${p.pid}</td>
+                        <td class="p-2.5 font-semibold text-fg">${esc(p.name)}</td>
+                        <td class="p-2.5 text-fg-dim">${esc(p.user)}</td>
                         <td class="p-2.5 ${cpuClass}">${p.cpu_usage.toFixed(1)}%</td>
-                        <td class="p-2.5 text-yellow-300">${memMb} MB</td>
-                        <td class="p-2.5 text-emerald-400">${p.read_kb_s ? p.read_kb_s.toFixed(1) : '0.0'} KB/s</td>
-                        <td class="p-2.5 text-amber-400">${p.write_kb_s ? p.write_kb_s.toFixed(1) : '0.0'} KB/s</td>
-                        <td class="p-2.5 text-purple-300">${p.threads || 1}</td>
+                        <td class="p-2.5 text-fg">${memMb} MB</td>
+                        <td class="p-2.5 text-rh-green">${p.read_kb_s ? p.read_kb_s.toFixed(1) : '0.0'} KB/s</td>
+                        <td class="p-2.5 text-rh-amber">${p.write_kb_s ? p.write_kb_s.toFixed(1) : '0.0'} KB/s</td>
+                        <td class="p-2.5 text-fg-mid">${p.threads || 1}</td>
                     </tr>
                 `;
             }).join('');
@@ -955,25 +926,25 @@ Auth::requireDashboard();
         function renderDisksCards(disks) {
             const container = document.getElementById('disks-cards-container');
             if (!disks || disks.length === 0) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-6 col-span-2">Nenhum disco detectado.</div>';
+                container.innerHTML = '<div class="text-fg-dim text-center py-6 col-span-2 text-xs">Nenhum disco detectado.</div>';
                 return;
             }
 
             container.innerHTML = disks.map(d => `
-                <div class="bg-brand-dark p-4 rounded-xl border border-brand-border space-y-3 font-mono">
+                <div class="panel p-4 space-y-3 font-mono">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <i class="fas fa-hdd text-emerald-400 text-base"></i>
-                            <span class="font-bold text-white text-xs">${esc(d.name)}</span>
+                            <i class="fas fa-hdd text-fg-mid text-base"></i>
+                            <span class="font-semibold text-fg text-xs">${esc(d.name)}</span>
                         </div>
-                        <span class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${esc(d.scheduler || 'none')}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-ink-600 text-fg-mid border border-ink-400">${esc(d.scheduler || 'none')}</span>
                     </div>
-                    <div class="text-[11px] text-gray-400 truncate">${esc(d.model || 'Dispositivo de Bloco')}</div>
-                    <div class="grid grid-cols-2 gap-2 text-xs border-t border-brand-border/60 pt-2">
-                        <div><span class="text-gray-500">Read:</span> <strong class="text-emerald-400">${(d.read_kb_s || 0).toFixed(1)} KB/s</strong></div>
-                        <div><span class="text-gray-500">Write:</span> <strong class="text-amber-400">${(d.write_kb_s || 0).toFixed(1)} KB/s</strong></div>
-                        <div><span class="text-gray-500">Total Read:</span> <strong class="text-gray-300">${(d.total_read_gb || 0).toFixed(2)} GB</strong></div>
-                        <div><span class="text-gray-500">Total Write:</span> <strong class="text-gray-300">${(d.total_write_gb || 0).toFixed(2)} GB</strong></div>
+                    <div class="text-[11px] text-fg-dim truncate">${esc(d.model || 'Dispositivo de Bloco')}</div>
+                    <div class="grid grid-cols-2 gap-2 text-xs border-t border-ink-500/70 pt-2">
+                        <div><span class="text-fg-dim">Read:</span> <strong class="text-rh-green font-medium">${(d.read_kb_s || 0).toFixed(1)} KB/s</strong></div>
+                        <div><span class="text-fg-dim">Write:</span> <strong class="text-rh-amber font-medium">${(d.write_kb_s || 0).toFixed(1)} KB/s</strong></div>
+                        <div><span class="text-fg-dim">Total Read:</span> <strong class="text-fg-mid">${(d.total_read_gb || 0).toFixed(2)} GB</strong></div>
+                        <div><span class="text-fg-dim">Total Write:</span> <strong class="text-fg-mid">${(d.total_write_gb || 0).toFixed(2)} GB</strong></div>
                     </div>
                 </div>
             `).join('');
@@ -982,20 +953,19 @@ Auth::requireDashboard();
         function renderSensors(sensors, batteries) {
             const sGrid = document.getElementById('sensors-grid');
             if (!sensors || sensors.length === 0) {
-                sGrid.innerHTML = '<div class="text-gray-500 text-center py-6 col-span-4">Nenhum sensor de hardware reportado.</div>';
+                sGrid.innerHTML = '<div class="text-fg-dim text-center py-6 col-span-4 text-xs">Nenhum sensor de hardware reportado.</div>';
             } else {
                 sGrid.innerHTML = sensors.map(s => {
-                    let icon = 'fa-temperature-half text-red-400';
-                    let valColor = 'text-red-300';
-                    if (s.category === 'Voltage') { icon = 'fa-bolt text-yellow-400'; valColor = 'text-yellow-300'; }
-                    else if (s.category === 'Fan') { icon = 'fa-fan text-cyan-400'; valColor = 'text-cyan-300'; }
-                    else if (s.category === 'Power') { icon = 'fa-plug text-emerald-400'; valColor = 'text-emerald-300'; }
+                    let icon = 'fa-temperature-half';
+                    if (s.category === 'Voltage') { icon = 'fa-bolt'; }
+                    else if (s.category === 'Fan') { icon = 'fa-fan'; }
+                    else if (s.category === 'Power') { icon = 'fa-plug'; }
 
                     return `
-                        <div class="bg-brand-dark p-3 rounded-lg border border-brand-border text-center font-mono">
-                            <i class="fas ${icon} text-sm mb-1 block"></i>
-                            <span class="text-[10px] text-gray-400 truncate block">${esc(s.label)}</span>
-                            <span class="text-sm font-bold ${valColor} mt-1 block">${esc(s.value.toFixed(1))} ${esc(s.unit)}</span>
+                        <div class="panel p-3 text-center font-mono">
+                            <i class="fas ${icon} text-fg-dim text-sm mb-1 block"></i>
+                            <span class="text-[10px] text-fg-dim truncate block">${esc(s.label)}</span>
+                            <span class="text-sm font-semibold text-fg mt-1 block">${esc(s.value.toFixed(1))} ${esc(s.unit)}</span>
                         </div>
                     `;
                 }).join('');
@@ -1003,21 +973,21 @@ Auth::requireDashboard();
 
             const bGrid = document.getElementById('batteries-grid');
             if (!batteries || batteries.length === 0) {
-                bGrid.innerHTML = '<div class="text-gray-500 text-center py-4 col-span-2">Alimentação via tomada AC (Desktop / Servidor).</div>';
+                bGrid.innerHTML = '<div class="text-fg-dim text-center py-4 col-span-2 text-xs">Alimentação via tomada AC (Desktop / Servidor).</div>';
             } else {
                 bGrid.innerHTML = batteries.map(b => `
-                    <div class="bg-brand-dark p-3.5 rounded-xl border border-brand-border space-y-2 font-mono text-xs">
+                    <div class="panel p-3.5 space-y-2 font-mono text-xs">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-white">${esc(b.name)} (${esc(b.model)})</span>
-                            <span class="text-emerald-400 font-bold">${b.capacity}% (${esc(b.status)})</span>
+                            <span class="font-semibold text-fg">${esc(b.name)} (${esc(b.model)})</span>
+                            <span class="text-rh-green font-semibold">${b.capacity}% (${esc(b.status)})</span>
                         </div>
-                        <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                            <div class="bg-emerald-400 h-full rounded-full" style="width: ${b.capacity}%"></div>
+                        <div class="w-full bg-ink-600 h-1 rounded-full overflow-hidden">
+                            <div class="bg-rh-green h-full rounded-full" style="width: ${b.capacity}%"></div>
                         </div>
-                        <div class="flex justify-between text-[11px] text-gray-400 pt-1">
-                            <span>Saúde: <strong class="text-cyan-300">${b.health_pct.toFixed(1)}%</strong></span>
-                            <span>Ciclos: <strong class="text-yellow-300">${b.cycle_count}</strong></span>
-                            <span>Consumo: <strong class="text-red-300">${b.power_now.toFixed(1)} W</strong></span>
+                        <div class="flex justify-between text-[11px] text-fg-dim pt-1">
+                            <span>Saúde: <strong class="text-rh-blue font-medium">${b.health_pct.toFixed(1)}%</strong></span>
+                            <span>Ciclos: <strong class="text-rh-amber font-medium">${b.cycle_count}</strong></span>
+                            <span>Consumo: <strong class="text-rh-red font-medium">${b.power_now.toFixed(1)} W</strong></span>
                         </div>
                     </div>
                 `).join('');
