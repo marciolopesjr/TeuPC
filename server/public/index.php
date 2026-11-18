@@ -1380,6 +1380,12 @@ Auth::requireDashboard();
             initCharts();
             fetchMachines();
             refreshTimer = setInterval(fetchMachines, currentIntervalMs);
+
+            // Deep-link de aba: index.php?tab=network, ?tab=events etc.
+            const urlTab = new URLSearchParams(location.search).get('tab');
+            if (urlTab && ['charts', 'processes', 'disks', 'sensors', 'hardware', 'network', 'events'].includes(urlTab)) {
+                switchTab(urlTab);
+            }
         });
     </script>
 </body>
