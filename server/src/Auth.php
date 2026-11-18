@@ -50,7 +50,15 @@ class Auth
 
     public static function startSession(): void
     {
-        session_set_cookie_params(['httponly' => true, 'samesite' => 'Strict']);
+        // Sessao longa (30 dias): o operador nao fica re-digitando a API key toda hora.
+        $lifetime = 60 * 60 * 24 * 30;
+        ini_set('session.gc_maxlifetime', (string) $lifetime);
+        session_set_cookie_params([
+            'lifetime' => $lifetime,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
         session_start();
     }
 
