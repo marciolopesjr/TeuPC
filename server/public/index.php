@@ -1,8 +1,5 @@
 <?php
-require_once __DIR__ . '/../src/Auth.php';
-
-use TeuPC\Central\Auth;
-
+// Logout em qualquer pagina (tratado no chrome antes do requireDashboard).
 if (isset($_GET['logout'])) {
     Auth::startSession();
     $_SESSION = [];
@@ -11,111 +8,24 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-Auth::requireDashboard();
+require_once __DIR__ . '/inc/chrome.php';
+chrome_start(['title' => 'NOC Dashboard & Hardware Telemetry', 'active' => 'overview', 'chartjs' => true]);
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeuPC Central | NOC Dashboard &amp; Hardware Telemetry</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        ink:    { 900: '#0f0f0f', 800: '#151515', 700: '#1f1f1f', 600: '#262626', 500: '#2f2f2f', 400: '#3f3f3f' },
-                        fg:     { DEFAULT: '#f2f2f2', mid: '#a1a1a1', dim: '#6b6b6b' },
-                        rh:     { red: '#EE0000', reddark: '#c40000', blue: '#0088CE', teal: '#00B8AF', green: '#4CA64C', amber: '#F0AB00' },
-                    },
-                    fontFamily: {
-                        ui:   ['"Red Hat Text"', 'system-ui', 'sans-serif'],
-                        disp: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
-                        mono: ['"Red Hat Mono"', 'ui-monospace', 'monospace'],
-                    },
-                }
-            }
-        }
-    </script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800&family=Red+Hat+Text:wght@400;500;600;700&family=Red+Hat+Mono:wght@400;500;600&display=swap');
-        body { font-family: 'Red Hat Text', system-ui, sans-serif; background: #0f0f0f; color: #f2f2f2; }
-        ::selection { background: rgba(238,0,0,.25); color: #fff; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f3f; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #5c5c5c; }
-        .card { background: #1f1f1f; border: 1px solid #2f2f2f; border-radius: 8px; }
-        .panel { background: #151515; border: 1px solid #2f2f2f; border-radius: 6px; }
-        .label { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #8a8a8a; }
-        .pulse { animation: pulse 2.4s cubic-bezier(.4,0,.6,1) infinite; }
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
-        .tab-active { border-color: #EE0000; color: #f2f2f2; background: #262626; }
-        .tab-idle   { border-color: transparent; color: #a1a1a1; background: transparent; }
-        .tab-idle:hover { color: #f2f2f2; background: #1f1f1f; }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col antialiased">
 
-    <!-- Top Navigation Header -->
-    <header class="bg-ink-800 border-b border-ink-500 sticky top-0 z-50 px-4 lg:px-8 py-3">
-        <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-4">
-
-            <!-- Logo & Brand Title -->
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-md bg-rh-red flex items-center justify-center font-disp font-extrabold text-white text-base">T</div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="font-disp text-[15px] font-bold tracking-tight text-fg leading-none">TeuPC <span class="text-fg-dim font-medium">Central</span></h1>
-                        <span class="text-[9px] px-1.5 py-px rounded bg-ink-600 border border-ink-400 text-fg-mid font-mono tracking-widest uppercase">NOC v2.0</span>
-                    </div>
-                    <p class="text-[11px] text-fg-dim leading-tight mt-0.5">Centro de comando &amp; telemetria em tempo real</p>
-                </div>
-            </div>
-
-            <!-- Global Controls & Status -->
-            <div class="flex flex-wrap items-center gap-3 text-xs">
-
-                <!-- Refresh Interval Selector -->
-                <div class="flex items-center bg-ink-900 border border-ink-500 rounded-md px-2.5 py-1.5 gap-2">
-                    <i class="fas fa-arrows-rotate text-fg-dim" id="refresh-spinner"></i>
-                    <span class="text-fg-dim text-[11px]">Intervalo:</span>
-                    <select id="select-interval" onchange="changeInterval(this.value)" class="bg-transparent text-fg font-medium focus:outline-none cursor-pointer text-xs">
-                        <option value="1000" class="bg-ink-700">1s (Rápido)</option>
-                        <option value="2000" class="bg-ink-700" selected>2s (Normal)</option>
-                        <option value="5000" class="bg-ink-700">5s (Econômico)</option>
-                        <option value="0" class="bg-ink-700">Pausado</option>
-                    </select>
-                </div>
-
-                <!-- Connection Pulse -->
-                <div class="flex items-center gap-2 bg-ink-900 border border-ink-500 rounded-md px-3 py-1.5">
-                    <span id="status-pulse-dot" class="w-2 h-2 rounded-full bg-rh-green pulse"></span>
-                    <span id="server-status" class="text-fg font-medium text-[11px]">Conectado</span>
-                </div>
-
-                <!-- Server Time Clock -->
-                <div class="hidden sm:flex items-center gap-1.5 bg-ink-900 border border-ink-500 rounded-md px-3 py-1.5 text-fg-mid font-mono text-[11px]">
-                    <i class="far fa-clock text-fg-dim"></i>
-                    <span id="server-time">--:--:--</span>
-                </div>
-
-                <a href="?logout=1" class="bg-ink-900 border border-ink-500 rounded-md px-3 py-1.5 text-fg-mid hover:text-fg hover:border-ink-400 text-[11px] transition-colors">
-                    <i class="fas fa-right-from-bracket mr-1"></i>Sair
-                </a>
-
+        <!-- Controles do NOC (especificos da visao geral) -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="font-disp text-lg font-bold text-fg">Visão geral</h2>
+            <div class="flex items-center bg-ink-900 border border-ink-500 rounded-md px-2.5 py-1.5 gap-2 text-xs">
+                <i class="fas fa-arrows-rotate text-fg-dim" id="refresh-spinner"></i>
+                <span class="text-fg-dim text-[11px]">Intervalo:</span>
+                <select id="select-interval" onchange="changeInterval(this.value)" class="bg-transparent text-fg font-medium focus:outline-none cursor-pointer text-xs">
+                    <option value="1000" class="bg-ink-700">1s (Rápido)</option>
+                    <option value="2000" class="bg-ink-700" selected>2s (Normal)</option>
+                    <option value="5000" class="bg-ink-700">5s (Econômico)</option>
+                    <option value="0" class="bg-ink-700">Pausado</option>
+                </select>
             </div>
         </div>
-    </header>
-
-    <!-- Main Workspace Container -->
-    <main class="flex-1 max-w-[1700px] w-full mx-auto p-4 lg:p-6 space-y-5">
 
         <!-- Global Metric Stat Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
@@ -554,7 +464,6 @@ Auth::requireDashboard();
 
             </div>
         </div>
-    </main>
 
     <!-- Snapshot JSON Viewer Modal -->
     <div id="snapshot-modal" class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 hidden">
@@ -580,16 +489,25 @@ Auth::requireDashboard();
     </div>
 
     <!-- JavaScript Logic -->
-    <script>
-        let selectedMachineId = null;
+    <script>        let selectedMachineId = null;
         let allMachines = [];
         let currentMachineDetails = null;
         let rawSnapshotObject = null;
         let refreshTimer = null;
-        let currentIntervalMs = 2000;
+        let currentIntervalMs = parseInt(localStorage.getItem('teupc.interval_ms')) || 2000;
         let currentTab = 'charts';
+        // Configs vindas da pagina Configuracoes (localStorage, escrevidas por settings.php)
+        let CONFIG = { cpu: 85, ram_gb: 4 };
+        try { Object.assign(CONFIG, JSON.parse(localStorage.getItem('teupc.thresholds') || '{}')); } catch (e) {}
         let snapshotCache = {};   // machine_id -> snapshot tecnico (muda pouco; busca 1x por selecao)
         let machineEvents = [];
+
+        // Cor de barra de uso conforme threshold configurado
+        function usageBarColor(pct, threshold) {
+            if (pct > threshold) return 'bg-rh-red';
+            if (pct > threshold / 2) return 'bg-rh-amber';
+            return 'bg-rh-green';
+        }
 
         // Todo dado vindo do banco (hostname, nome de processo, modelo de disco...) passa por aqui
         // antes de entrar em innerHTML: nome de processo é escolhido por qualquer usuário da máquina.
@@ -801,7 +719,7 @@ Auth::requireDashboard();
 
                         <!-- CPU Usage mini bar -->
                         <div class="w-full bg-ink-600 h-1 rounded-full mb-2 overflow-hidden">
-                            <div class="bg-rh-blue h-full rounded-full" style="width: ${Math.min(cpuVal, 100)}%"></div>
+                            <div class="${usageBarColor(cpuVal, CONFIG.cpu)} h-full rounded-full" style="width: ${Math.min(cpuVal, 100)}%"></div>
                         </div>
 
                         <div class="flex items-center justify-between text-[10px] text-fg-dim border-t border-ink-500/70 pt-1.5 font-mono">
@@ -939,6 +857,7 @@ Auth::requireDashboard();
 
                     document.getElementById('quick-cpu').innerText = `${cpu.toFixed(1)}%`;
                     document.getElementById('quick-cpu-bar').style.width = `${Math.min(cpu, 100)}%`;
+                    document.getElementById('quick-cpu-bar').className = `h-full rounded-full transition-all duration-300 ${usageBarColor(cpu, CONFIG.cpu)}`;
 
                     document.getElementById('quick-ram').innerText = `${ramUsed} / ${ramTotal} GB`;
                     document.getElementById('quick-ram-bar').style.width = `${Math.min(ramPct, 100)}%`;
@@ -1037,7 +956,7 @@ Auth::requireDashboard();
 
             tbody.innerHTML = procs.map(p => {
                 const memMb = (p.mem_bytes / (1024 * 1024)).toFixed(1);
-                const cpuClass = p.cpu_usage > 50 ? 'text-rh-red font-semibold' : (p.cpu_usage > 10 ? 'text-rh-amber' : 'text-fg-mid');
+                const cpuClass = p.cpu_usage > CONFIG.cpu ? 'text-rh-red font-semibold' : (p.cpu_usage > CONFIG.cpu / 2 ? 'text-rh-amber' : 'text-fg-mid');
                 return `
                     <tr class="hover:bg-ink-800/70 transition-colors">
                         <td class="p-2.5 text-fg-dim">${p.pid}</td>
@@ -1388,5 +1307,4 @@ Auth::requireDashboard();
             }
         });
     </script>
-</body>
-</html>
+<?php chrome_end(); ?>
