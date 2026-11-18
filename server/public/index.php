@@ -1,6 +1,8 @@
 <?php
 // Roteador da SPA: shell completo no primeiro load, fragmentos em requisicoes HTMX.
 
+require_once __DIR__ . '/inc/chrome.php';
+
 $views = ['overview', 'events', 'network', 'settings'];
 $view = $_GET['view'] ?? 'overview';
 if (!in_array($view, $views, true)) {

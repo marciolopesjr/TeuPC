@@ -2,8 +2,8 @@
 // View "Visao geral": NOC com regioes HTMX auto-poluiveis.
 // Partes (?part=): strip | fleet | vitals | tab | snapshot-json. Sem part = pagina completa.
 
-require_once __DIR__ . '/../src/Database.php';
-require_once __DIR__ . '/../src/Settings.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Settings.php';
 
 use TeuPC\Central\Database;
 use TeuPC\Central\Settings;
