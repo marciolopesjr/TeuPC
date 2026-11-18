@@ -6,6 +6,9 @@ namespace TeuPC\Central;
  * Configs do dashboard, persistidas no SQLite (sobrevivem a browser/cache).
  * Chaves conhecidas: interval_ms (int), cpu (int %), ram_gb (int).
  */
+
+require_once __DIR__ . '/Database.php';
+
 class Settings
 {
     public const DEFAULTS = [
