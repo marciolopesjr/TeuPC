@@ -274,7 +274,7 @@ if ($part === 'tab') {
             const GRID = '#262626', TICK = '#8a8a8a';
             const FONT = { family: '"Red Hat Mono", monospace', size: 10 };
             const TOOLTIP = { backgroundColor: '#262626', borderColor: '#3f3f3f', borderWidth: 1, titleColor: '#f2f2f2', bodyColor: '#a1a1a1', titleFont: FONT, bodyFont: FONT, padding: 8, cornerRadius: 4 };
-            const ds = (color) => ({ data: [], borderColor: color, backgroundColor: color + '14', fill: true, borderWidth: 1.5, tension: 0.3, pointRadius: 0, pointHoverRadius: 3 });
+            const ds = (color, label) => ({ label, data: [], borderColor: color, backgroundColor: color + '14', fill: true, borderWidth: 1.5, tension: 0.3, pointRadius: 0, pointHoverRadius: 3 });
             window.teupcCharts = window.teupcCharts || {};
             for (const k of ['cpu', 'ram', 'disk', 'net']) { if (teupcCharts[k]) { teupcCharts[k].destroy(); delete teupcCharts[k]; } }
             const mk = (canvas, datasets, legend = false) => new Chart(canvas, {
@@ -287,10 +287,10 @@ if ($part === 'tab') {
                 }
             });
             const mid = '<?= overview_esc($machineId) ?>';
-            teupcCharts.cpu = mk(document.getElementById('chart-cpu'), [ds('#0088CE')]);
-            teupcCharts.ram = mk(document.getElementById('chart-ram'), [ds('#00B8AF')]);
-            teupcCharts.disk = mk(document.getElementById('chart-disk'), [ds('#4CA64C'), ds('#F0AB00')], true);
-            teupcCharts.net = mk(document.getElementById('chart-net'), [ds('#0088CE'), ds('#EE0000')], true);
+            teupcCharts.cpu = mk(document.getElementById('chart-cpu'), [ds('#0088CE', 'CPU %')]);
+            teupcCharts.ram = mk(document.getElementById('chart-ram'), [ds('#00B8AF', 'RAM (GB)')]);
+            teupcCharts.disk = mk(document.getElementById('chart-disk'), [ds('#4CA64C', 'Read KB/s'), ds('#F0AB00', 'Write KB/s')], true);
+            teupcCharts.net = mk(document.getElementById('chart-net'), [ds('#0088CE', 'RX (Download) KB/s'), ds('#EE0000', 'TX (Upload) KB/s')], true);
 
             async function pollHistory() {
                 try {
