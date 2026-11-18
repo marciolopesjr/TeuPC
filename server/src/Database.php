@@ -95,6 +95,11 @@ class Database
                 FOREIGN KEY(machine_id) REFERENCES machines(machine_id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS dashboard_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+
             CREATE INDEX IF NOT EXISTS idx_telemetry_machine ON telemetry_logs(machine_id, created_at);
             CREATE INDEX IF NOT EXISTS idx_events_machine ON events_log(machine_id, created_at);
         ");
