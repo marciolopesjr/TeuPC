@@ -292,6 +292,12 @@ Auth::requireDashboard();
                     <button onclick="switchTab('hardware')" id="tab-btn-hardware" class="tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-idle flex items-center gap-2">
                         <i class="fas fa-shield-halved"></i> Hardware &amp; firmware
                     </button>
+                    <button onclick="switchTab('network')" id="tab-btn-network" class="tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-idle flex items-center gap-2">
+                        <i class="fas fa-network-wired"></i> Rede
+                    </button>
+                    <button onclick="switchTab('events')" id="tab-btn-events" class="tab-btn px-4 py-2 rounded-none font-semibold text-xs transition-colors border-b-2 tab-idle flex items-center gap-2">
+                        <i class="fas fa-bell"></i> Eventos
+                    </button>
                 </div>
 
                 <!-- TAB 1: Real-time Charts View -->
@@ -391,6 +397,14 @@ Auth::requireDashboard();
                             <div class="text-fg-dim text-center py-6 col-span-2 text-xs">Nenhum disco reportado na telemetria recente.</div>
                         </div>
                     </div>
+                    <div class="card p-4">
+                        <h4 class="label !text-fg mb-4 flex items-center gap-2">
+                            <i class="fas fa-folder-tree"></i> Filesystems montados
+                        </h4>
+                        <div id="filesystems-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="text-fg-dim text-center py-6 col-span-2 text-xs">Disponível a partir do snapshot técnico do host.</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- TAB 4: Sensors & Power View -->
@@ -434,6 +448,92 @@ Auth::requireDashboard();
                                 <div class="flex justify-between"><span class="text-fg-dim">Memória física:</span><span id="hw-mem-total" class="text-rh-green">--</span></div>
                             </div>
                         </div>
+                        <div id="platform-extra" class="mt-4 space-y-4">
+                            <div class="text-fg-dim text-center py-4 text-xs">Firmware, slots de memória e diagnóstico do kernel aparecem aqui quando o snapshot técnico chegar.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: Network View -->
+                <div id="tab-pane-network" class="space-y-4 hidden">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="panel p-3"><span class="label block">Gateway</span><span id="net-gateway" class="text-sm font-mono text-fg mt-1 block">--</span></div>
+                        <div class="panel p-3"><span class="label block">DNS</span><span id="net-dns" class="text-sm font-mono text-fg mt-1 block">--</span></div>
+                        <div class="panel p-3"><span class="label block">TCP estabelecidas</span><span id="net-tcp-estab" class="text-sm font-mono text-fg mt-1 block">--</span></div>
+                        <div class="panel p-3"><span class="label block">TCP em escuta</span><span id="net-tcp-listen" class="text-sm font-mono text-fg mt-1 block">--</span></div>
+                    </div>
+
+                    <div class="card p-4">
+                        <h4 class="label !text-fg mb-3 flex items-center gap-2">
+                            <i class="fas fa-network-wired"></i> Interfaces de rede
+                        </h4>
+                        <div id="net-interfaces-container" class="text-fg-dim text-center py-4 text-xs">Disponível a partir do snapshot técnico do host.</div>
+                    </div>
+
+                    <div class="card p-4">
+                        <h4 class="label !text-fg mb-3 flex items-center gap-2">
+                            <i class="fas fa-door-open"></i> Portas em escuta
+                        </h4>
+                        <div class="overflow-x-auto custom-scrollbar max-h-[360px] overflow-y-auto">
+                            <table class="w-full text-left text-xs font-mono">
+                                <thead class="bg-ink-900 text-fg-dim border-b border-ink-500 sticky top-0">
+                                    <tr>
+                                        <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Protocolo</th>
+                                        <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Endereço local</th>
+                                        <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="net-ports-body" class="divide-y divide-ink-500/60">
+                                    <tr><td colspan="3" class="p-4 text-center text-fg-dim">Disponível a partir do snapshot técnico.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card p-4">
+                        <h4 class="label !text-fg mb-3 flex items-center gap-2">
+                            <i class="fas fa-table-cells-large"></i> Tabela ARP (vizinhos na rede)
+                        </h4>
+                        <div class="overflow-x-auto custom-scrollbar max-h-[300px] overflow-y-auto">
+                            <table class="w-full text-left text-xs font-mono">
+                                <thead class="bg-ink-900 text-fg-dim border-b border-ink-500 sticky top-0">
+                                    <tr>
+                                        <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Interface</th>
+                                        <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Endereço IP</th>
+                                        <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">MAC</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="net-arp-body" class="divide-y divide-ink-500/60">
+                                    <tr><td colspan="3" class="p-4 text-center text-fg-dim">Disponível a partir do snapshot técnico.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 7: Events History View -->
+                <div id="tab-pane-events" class="card p-4 hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                        <h4 class="label !text-fg flex items-center gap-2">
+                            <i class="fas fa-bell"></i> Histórico de eventos e anomalias do host
+                        </h4>
+                        <input type="text" id="filter-events-input" oninput="filterEvents(this.value)" placeholder="Filtrar por categoria, título ou detalhe..." class="bg-ink-900 border border-ink-500 rounded-md px-3 py-1.5 text-xs text-fg placeholder-fg-dim focus:outline-none focus:border-rh-red/70 w-64 transition-colors">
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar max-h-[560px] overflow-y-auto">
+                        <table class="w-full text-left text-xs font-mono">
+                            <thead class="bg-ink-900 text-fg-dim border-b border-ink-500 sticky top-0">
+                                <tr>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Horário</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Severidade</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Categoria</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Evento</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Detalhes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="events-table-body" class="divide-y divide-ink-500/60">
+                                <tr><td colspan="5" class="p-4 text-center text-fg-dim">Carregando eventos...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -488,6 +588,8 @@ Auth::requireDashboard();
         let refreshTimer = null;
         let currentIntervalMs = 2000;
         let currentTab = 'charts';
+        let snapshotCache = {};   // machine_id -> snapshot tecnico (muda pouco; busca 1x por selecao)
+        let machineEvents = [];
 
         // Todo dado vindo do banco (hostname, nome de processo, modelo de disco...) passa por aqui
         // antes de entrar em innerHTML: nome de processo é escolhido por qualquer usuário da máquina.
@@ -758,12 +860,36 @@ Auth::requireDashboard();
             switchTab(currentTab);
 
             fetchMachineDetails(machineId);
+            loadSnapshot(machineId);
             renderMachineList(allMachines);
+        }
+
+        async function loadSnapshot(machineId) {
+            try {
+                if (!snapshotCache[machineId]) {
+                    const res = await fetch(`api/snapshot.php?machine_id=${encodeURIComponent(machineId)}`);
+                    const data = await res.json();
+                    if (!data.snapshots || data.snapshots.length === 0) {
+                        snapshotCache[machineId] = null;
+                    } else {
+                        snapshotCache[machineId] = {
+                            taken_at: data.snapshots[0].created_at || null,
+                            data: JSON.parse(data.snapshots[0].snapshot_json)
+                        };
+                    }
+                }
+                const snap = snapshotCache[machineId];
+                renderNetwork(snap);
+                renderFilesystems(snap);
+                renderPlatform(snap);
+            } catch (err) {
+                console.error("Erro ao carregar snapshot:", err);
+            }
         }
 
         function switchTab(tabId) {
             currentTab = tabId;
-            const tabs = ['charts', 'processes', 'disks', 'sensors', 'hardware'];
+            const tabs = ['charts', 'processes', 'disks', 'sensors', 'hardware', 'network', 'events'];
 
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-btn-${t}`);
@@ -869,6 +995,10 @@ Auth::requireDashboard();
                 if (currentMachineDetails) {
                     renderSensors(currentMachineDetails.sensors || [], currentMachineDetails.batteries || []);
                 }
+
+                // Update Events Tab
+                machineEvents = data.events || [];
+                renderEvents(machineEvents);
 
                 // Update Hardware Metadata Tab
                 document.getElementById('hw-os').innerText = m.os || '--';
@@ -992,6 +1122,209 @@ Auth::requireDashboard();
                     </div>
                 `).join('');
             }
+        }
+
+        function fmtBytesGb(bytes) {
+            return (bytes / 1073741824).toFixed(1) + ' GB';
+        }
+
+        function renderNetwork(snap) {
+            const na = snap && snap.data ? snap.data.network_advanced : null;
+            const nets = snap && snap.data ? snap.data.networks : null;
+
+            document.getElementById('net-gateway').innerText = na && na.default_gateway ? na.default_gateway : '--';
+            document.getElementById('net-dns').innerText = na && na.dns_servers && na.dns_servers.length ? na.dns_servers.join(', ') : '--';
+            document.getElementById('net-tcp-estab').innerText = na && na.tcp_established != null ? na.tcp_established : '--';
+            document.getElementById('net-tcp-listen').innerText = na && na.tcp_listen != null ? na.tcp_listen : '--';
+
+            const ifContainer = document.getElementById('net-interfaces-container');
+            if (nets && nets.length > 0) {
+                ifContainer.innerHTML = `
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs font-mono">
+                            <thead class="bg-ink-900 text-fg-dim border-b border-ink-500">
+                                <tr>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Interface</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Tipo</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">IPv4</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">RX/s</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">TX/s</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Total RX</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Total TX</th>
+                                    <th class="p-2.5 font-medium uppercase text-[10px] tracking-wider">Erros / Drops</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-ink-500/60">
+                                ${nets.map(n => `
+                                    <tr class="hover:bg-ink-800/70 transition-colors">
+                                        <td class="p-2.5 font-semibold text-fg">${esc(n.name)}</td>
+                                        <td class="p-2.5 text-fg-dim">${esc(n.iface_type || '-')}</td>
+                                        <td class="p-2.5 text-rh-blue">${esc(n.ipv4 || '-')}</td>
+                                        <td class="p-2.5 text-rh-green">${(n.rx_per_sec || 0).toFixed(1)} KB/s</td>
+                                        <td class="p-2.5 text-rh-amber">${(n.tx_per_sec || 0).toFixed(1)} KB/s</td>
+                                        <td class="p-2.5 text-fg-mid">${(n.rx_total || 0).toFixed(1)} MB</td>
+                                        <td class="p-2.5 text-fg-mid">${(n.tx_total || 0).toFixed(1)} MB</td>
+                                        <td class="p-2.5 ${((n.rx_errors||0)+(n.tx_errors||0)) > 0 ? 'text-rh-red' : 'text-fg-dim'}">${(n.rx_errors||0)+(n.tx_errors||0)} / ${(n.rx_dropped||0)+(n.tx_dropped||0)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+            } else {
+                ifContainer.innerHTML = '<div class="text-fg-dim text-center py-4 text-xs">Nenhuma interface reportada no snapshot.</div>';
+            }
+
+            const portsBody = document.getElementById('net-ports-body');
+            if (na && na.listening_ports && na.listening_ports.length > 0) {
+                portsBody.innerHTML = na.listening_ports.map(p => `
+                    <tr class="hover:bg-ink-800/70 transition-colors">
+                        <td class="p-2.5 text-fg-dim">${esc(p.protocol || 'TCP')}</td>
+                        <td class="p-2.5 font-semibold text-fg">${esc(p.local_address)}</td>
+                        <td class="p-2.5 text-rh-blue">${esc(p.state || 'LISTEN')}</td>
+                    </tr>
+                `).join('');
+            } else {
+                portsBody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-fg-dim">Nenhuma porta em escuta reportada.</td></tr>';
+            }
+
+            const arpBody = document.getElementById('net-arp-body');
+            if (na && na.arp_entries && na.arp_entries.length > 0) {
+                arpBody.innerHTML = na.arp_entries.map(a => `
+                    <tr class="hover:bg-ink-800/70 transition-colors">
+                        <td class="p-2.5 text-fg-dim">${esc(a.interface)}</td>
+                        <td class="p-2.5 text-fg">${esc(a.ip_address)}</td>
+                        <td class="p-2.5 text-fg-mid">${esc(a.mac_address)}</td>
+                    </tr>
+                `).join('');
+            } else {
+                arpBody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-fg-dim">Nenhum vizinho ARP reportado.</td></tr>';
+            }
+        }
+
+        function renderFilesystems(snap) {
+            const container = document.getElementById('filesystems-container');
+            const fss = snap && snap.data ? snap.data.filesystems : null;
+            if (!fss || fss.length === 0) {
+                container.innerHTML = '<div class="text-fg-dim text-center py-4 col-span-2 text-xs">Nenhum filesystem reportado no snapshot.</div>';
+                return;
+            }
+
+            container.innerHTML = fss.map(f => {
+                const total = f.total_bytes || 0;
+                const avail = f.available_bytes || 0;
+                const usedPct = total > 0 ? Math.min(((total - avail) / total) * 100, 100) : 0;
+                const barColor = usedPct > 90 ? 'bg-rh-red' : (usedPct > 75 ? 'bg-rh-amber' : 'bg-rh-green');
+                return `
+                    <div class="panel p-3.5 space-y-2 font-mono text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-fg">${esc(f.mount_point)}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-ink-600 text-fg-mid border border-ink-400">${esc(f.fs_type || '-')}</span>
+                        </div>
+                        <div class="text-[11px] text-fg-dim truncate">${esc(f.device)}</div>
+                        <div class="w-full bg-ink-600 h-1 rounded-full overflow-hidden">
+                            <div class="${barColor} h-full rounded-full" style="width: ${usedPct.toFixed(1)}%"></div>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-fg-dim pt-0.5">
+                            <span>Uso: <strong class="${usedPct > 90 ? 'text-rh-red' : 'text-fg'} font-medium">${usedPct.toFixed(1)}%</strong></span>
+                            <span>Livre: <strong class="text-fg font-medium">${fmtBytesGb(avail)}</strong></span>
+                            <span>Total: <strong class="text-fg-mid">${fmtBytesGb(total)}</strong></span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPlatform(snap) {
+            const container = document.getElementById('platform-extra');
+            const s = snap && snap.data ? snap.data : null;
+            if (!s) {
+                container.innerHTML = '<div class="text-fg-dim text-center py-4 text-xs">Firmware, slots de memória e diagnóstico do kernel aparecem aqui quando o snapshot técnico chegar.</div>';
+                return;
+            }
+
+            const fw = s.firmware || {};
+            const kd = s.kernel_diagnostics || {};
+            const pl = s.power_limits || {};
+            const slots = (s.mem_advanced || {}).slots || [];
+            const takenAt = snap.taken_at ? ` <span class="text-fg-dim font-mono font-normal normal-case">(snapshot de ${esc(snap.taken_at)})</span>` : '';
+
+            const kv = (k, v, cls = 'text-fg') => `
+                <div class="flex justify-between gap-3"><span class="text-fg-dim shrink-0">${esc(k)}:</span><span class="${cls} text-right truncate">${v == null || v === '' ? '--' : esc(v)}</span></div>`;
+
+            container.innerHTML = `
+                <h4 class="label !text-fg-mid flex items-center gap-2 mb-2"><i class="fas fa-microchip"></i> Firmware &amp; plataforma${takenAt}</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="panel p-3.5 space-y-2">
+                        <div class="label !text-fg-mid border-b border-ink-500 pb-1.5">BIOS / UEFI</div>
+                        ${kv('Boot mode', fw.boot_mode)}
+                        ${kv('Secure Boot', fw.secure_boot, /^(enabled|habilitado|ativo)/i.test(fw.secure_boot || '') && !/^des/i.test(fw.secure_boot || '') ? 'text-rh-green' : 'text-rh-amber')}
+                        ${kv('TPM', fw.tpm_description, 'text-rh-blue')}
+                        ${kv('Chassi', [fw.chassis_vendor, fw.chassis_type].filter(Boolean).join(' / '))}
+                        ${kv('Serial', fw.product_serial)}
+                    </div>
+                    <div class="panel p-3.5 space-y-2">
+                        <div class="label !text-fg-mid border-b border-ink-500 pb-1.5">Kernel &amp; energia</div>
+                        ${kv('Kernel tainted', kd.is_tainted ? 'sim (' + (kd.tainted_flags || '') + ')' : 'não', kd.is_tainted ? 'text-rh-red' : 'text-rh-green')}
+                        ${kv('Módulos carregados', kd.loaded_modules_count)}
+                        ${kv('Governor', pl.current_governor)}
+                        ${kv('PL1 / PL2', pl.pl1_w != null ? pl.pl1_w + ' W / ' + (pl.pl2_w != null ? pl.pl2_w + ' W' : '--') : '--')}
+                        ${kv('Boot cmdline', kd.boot_cmdline, 'text-fg-mid')}
+                    </div>
+                </div>
+                ${slots.length ? `
+                <h4 class="label !text-fg-mid flex items-center gap-2 mt-4 mb-2"><i class="fas fa-memory"></i> Slots de memória (DMI)</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    ${slots.map(b => `
+                        <div class="panel p-3 space-y-1 font-mono text-xs">
+                            <span class="label block">${esc(b.locator || b.bank_locator || 'slot')}</span>
+                            ${kv('Tipo', b.mem_type || b.memory_type)}
+                            ${kv('Capacidade', b.capacity_gb ? b.capacity_gb + ' GB' : '--')}
+                            ${kv('Velocidade', b.speed_mts ? b.speed_mts + ' MT/s' : '--')}
+                            ${kv('Fabricante', b.manufacturer)}
+                        </div>
+                    `).join('')}
+                </div>` : ''}
+            `;
+        }
+
+        function renderEvents(events) {
+            renderEventsList(events);
+        }
+
+        function filterEvents(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                renderEventsList(machineEvents);
+                return;
+            }
+            renderEventsList(machineEvents.filter(e =>
+                (e.category && e.category.toLowerCase().includes(q)) ||
+                (e.title && e.title.toLowerCase().includes(q)) ||
+                (e.details && e.details.toLowerCase().includes(q))
+            ));
+        }
+
+        function renderEventsList(events) {
+            const tbody = document.getElementById('events-table-body');
+            if (!events || events.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-fg-dim">Nenhum evento registrado para este host.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = events.map(e => {
+                let sevBadge = 'text-rh-blue border-rh-blue/40 bg-rh-blue/10';
+                if (e.severity === 'Critical') sevBadge = 'text-rh-red border-rh-red/40 bg-rh-red/10';
+                else if (e.severity === 'Warning') sevBadge = 'text-rh-amber border-rh-amber/40 bg-rh-amber/10';
+                return `
+                    <tr class="hover:bg-ink-800/70 transition-colors">
+                        <td class="p-2.5 text-fg-dim">${esc(e.created_at || '--')}</td>
+                        <td class="p-2.5"><span class="text-[9px] px-1.5 py-0.5 rounded border font-mono font-medium ${sevBadge}">${esc(e.severity || 'Info')}</span></td>
+                        <td class="p-2.5 text-fg-mid">${esc(e.category || '-')}</td>
+                        <td class="p-2.5 font-semibold text-fg">${esc(e.title)}</td>
+                        <td class="p-2.5 text-fg-dim max-w-[420px] truncate">${esc(e.details || '-')}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         async function viewLatestSnapshot() {
