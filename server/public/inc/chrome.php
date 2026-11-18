@@ -168,7 +168,7 @@ function chrome_shell(string $view): void
                 <?php foreach (array_slice($PAGES, 0, 3) as $key => $p): ?>
                 <a href="/?view=<?= $key ?>" data-nav="<?= $key ?>"
                    hx-get="/?view=<?= $key ?>" hx-target="#app" hx-swap="innerHTML transition:true" hx-push-url="true"
-                   class="flex items-center gap-3 px-3 py-2.5 rounded-md text-[13px] font-medium border-l-2 transition-colors cursor-pointer
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-none text-[13px] font-medium border-l-2 transition-colors cursor-pointer
                           <?= $key === $view ? 'nav-active' : 'border-l-transparent text-fg-mid hover:text-fg hover:bg-ink-700' ?>">
                     <i class="fas <?= $p['icon'] ?> w-4 text-center <?= $key === $view ? 'text-rh-red' : 'text-fg-dim' ?>"></i>
                     <?= $p['label'] ?>
@@ -178,7 +178,7 @@ function chrome_shell(string $view): void
                 <?php foreach (array_slice($PAGES, 3) as $key => $p): ?>
                 <a href="/?view=<?= $key ?>" data-nav="<?= $key ?>"
                    hx-get="/?view=<?= $key ?>" hx-target="#app" hx-swap="innerHTML transition:true" hx-push-url="true"
-                   class="flex items-center gap-3 px-3 py-2.5 rounded-md text-[13px] font-medium border-l-2 transition-colors cursor-pointer
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-none text-[13px] font-medium border-l-2 transition-colors cursor-pointer
                           <?= $key === $view ? 'nav-active' : 'border-l-transparent text-fg-mid hover:text-fg hover:bg-ink-700' ?>">
                     <i class="fas <?= $p['icon'] ?> w-4 text-center <?= $key === $view ? 'text-rh-red' : 'text-fg-dim' ?>"></i>
                     <?= $p['label'] ?>
